@@ -28,13 +28,21 @@ static unsigned int programId;
 unsigned int VAO;
 unsigned int VBO;
 
+unsigned int VAO_2;
+unsigned int VBO_2;
+
 using namespace glm;
 
-#define MaxNumPts 64
+#define MaxNumPts 120
 float PointArray[MaxNumPts][3];
+
+float CurveArray[MaxNumPts][3];
+
 int NumPts = 0;
 
-// Window size in pixels
+int i, j;
+
+// Window size in pixels 
 int		width = 500;
 int		height = 500;
 
@@ -43,7 +51,7 @@ void addNewPoint(float x, float y);
 void removeFirstPoint();
 void removeLastPoint();
 
-
+   
 void myKeyboardFunc(unsigned char key, int x, int y)
 {
 	switch (key) {
@@ -129,11 +137,18 @@ void initShader(void)
 
 void init(void)
 {
+
+	//control polygon data
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
-
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	//curve points data
+	glGenVertexArrays(1, &VAO_2);
+	glBindVertexArray(VAO_2);
+	glGenBuffers(1, &VBO_2);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
 
 	// Background color
 	glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -141,27 +156,72 @@ void init(void)
 
 }
 
+void deCasteljau(float t, float* result) {
+	int i, k;
+	float coordX[MaxNumPts], coordY[MaxNumPts];
+
+	for (i = 0; i < NumPts; i++) {
+		coordX[i] = PointArray[i][0];
+		coordY[i] = PointArray[i][1];
+	}
+
+	for (i = 1; i < NumPts; i++) {
+		for (k = 0; k < NumPts - i; k++) {
+			coordX[k] = (1 - t) * coordX[k] + (t)*coordX[k + 1];
+			coordY[k] = (1 - t) * coordY[k] + (t)*coordY[k + 1];
+		}
+	}
+	result[0] = coordX[0];
+	result[1] = coordY[0];
+	result[2] = 0.0;
+}
+
+
 void drawScene(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(PointArray), &PointArray[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// Draw the line segments
-	glBindVertexArray(VAO);
-	glPointSize(8.0);
+	glLineWidth(2.5);
 	glDrawArrays(GL_LINE_STRIP, 0, NumPts);
 
-	// Draw the points
-	glBindVertexArray(VAO);
-	glLineWidth(2.5);
-	glDrawArrays(GL_POINTS, 0, NumPts);
 
+	// Draw the points
+	glPointSize(8.0);
+	glDrawArrays(GL_POINTS, 0, NumPts);
+	glBindVertexArray(0);
+
+	if (NumPts > 1) {
+		float result[3];
+
+	
+		for (i = 0; i <= 100; i++) {
+			deCasteljau((GLfloat)i / 100, result);
+			CurveArray[i][0] = result[0];
+			CurveArray[i][1] = result[1];    
+			CurveArray[i][2] = 0;
+		}
+		
+		glBindVertexArray(VAO_2);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(CurveArray), &CurveArray[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		glLineWidth(0.5);
+		glDrawArrays(GL_LINE_STRIP, 0, 101);
+		glBindVertexArray(0);
+	}   
 	glutSwapBuffers();
 }
+
+
 
 int main(int argc, char** argv)
 {
