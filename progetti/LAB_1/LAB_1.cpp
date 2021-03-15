@@ -33,6 +33,11 @@ unsigned int VBO_2;
 
 using namespace glm;
 
+/*5 point variables*/
+int mouseOverIndex = -1;
+bool isMovingPoint = false;
+int movingPoint = -1;
+
 #define MaxNumPts 120
 float PointArray[MaxNumPts][3];
 
@@ -93,6 +98,11 @@ void resizeWindow(int w, int h)
 void myMouseFunc(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
+		if (mouseOverIndex != -1) {
+			isMovingPoint = true;
+			movingPoint = mouseOverIndex;
+			return;
+		}
 		// (x,y) viewport(0,width)x(0,height)   -->   (xPos,yPos) window(-1,1)x(-1,1)
 		float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
 		float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
@@ -102,6 +112,36 @@ void myMouseFunc(int button, int state, int x, int y) {
 		addNewPoint(xPos, yPos);
 		glutPostRedisplay();
 	}
+}
+
+void passive(int x, int y) {
+	float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
+	float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
+
+	for (int i = 0; i < NumPts; i++) {
+		float dist = sqrt(pow(PointArray[i][0] - xPos, 2) + pow(PointArray[i][1] - yPos, 2));
+		if (dist < 0.03) {
+			mouseOverIndex = i;
+			glutPostRedisplay();
+			return;
+		}
+		else {
+			mouseOverIndex = -1;
+		}
+	}
+	glutPostRedisplay();
+}
+
+//spostamento punto di controllo i-esimo
+void motion(int x, int y) {
+	float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
+	float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
+
+	if (isMovingPoint) {
+		PointArray[movingPoint][0] = xPos;
+		PointArray[movingPoint][1] = yPos;
+	}
+	glutPostRedisplay();
 }
 
 // Add a new point to the end of the list.  
@@ -238,8 +278,14 @@ int main(int argc, char** argv)
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(resizeWindow);
+
 	glutKeyboardFunc(myKeyboardFunc);
 	glutMouseFunc(myMouseFunc);
+	glutMotionFunc(motion);
+	glutPassiveMotionFunc(passive);
+
+	
+
 
 
 	glewExperimental = GL_TRUE;
