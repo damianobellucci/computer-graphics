@@ -11,6 +11,17 @@
  *	 Press escape to exit.
  */
 
+/* PUNTI DA SODDISFARE:
+1,OK) provare i controlli da keyboard. tasto sinistro si aggiunge un punto,
+i comandi 'f' (lettera effe) e 'l' (lettera elle) rimuovono il primo e l'ultimo 
+punto della lista di punti, rispettivamente. Oltre i 64 punti, i primi verranno 
+rimossi.
+2,OK) osservare come il programma usa le OpenGL GLUT callback per catturare
+gli eventi click del mouse e determinare le posizioni (x,y) relative
+3,OK) utilizzare i punti di controllo inseriti, utilizzando l'algoritmo di de
+Casteljau
+*/
+
 
 #include <iostream>
 #include "ShaderMaker.h"
@@ -22,6 +33,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+
+/*questo valore ci serve per settare un limite dei punti di controllo
+disegnabili oltre la quale se si disegna un nuovo punto verrà eliminato
+un'altro all'inizio
+*/
+#define MaxNumPts 120
+
 
 static unsigned int programId;
 
@@ -38,7 +56,7 @@ int mouseOverIndex = -1;
 bool isMovingPoint = false;
 int movingPoint = -1;
 
-#define MaxNumPts 120
+
 float PointArray[MaxNumPts][3];
 
 float CurveArray[MaxNumPts][3];
@@ -56,7 +74,13 @@ void addNewPoint(float x, float y);
 void removeFirstPoint();
 void removeLastPoint();
 
-   
+  
+/*
+Funzione che data in input alla glutKeyboardFunc 
+
+permmette di cancellare primo punto di controllo con f e ultimo punto
+di controllo con l
+*/
 void myKeyboardFunc(unsigned char key, int x, int y)
 {
 	switch (key) {
@@ -74,6 +98,11 @@ void myKeyboardFunc(unsigned char key, int x, int y)
 	}
 }
 
+/*
+funzione usata in myKeyboardFunc (se viene premuto tasto f)
+e in funzione addNewPoint se numero massimo di punti viene
+ecceduto  
+*/
 void removeFirstPoint() {
 	int i;
 	if (NumPts > 0) {
@@ -86,6 +115,17 @@ void removeFirstPoint() {
 		}
 	}
 }
+
+/*
+funzione usata se viene premuto il tasto l (elle) oppure
+se viene sorprassato il numero massimo di punti ammissibili
+*/
+void removeLastPoint() {
+	if (NumPts > 0) {
+		NumPts--;
+	}
+}
+
 void resizeWindow(int w, int h)
 {
 	height = (h > 1) ? h : 2;
@@ -94,8 +134,19 @@ void resizeWindow(int w, int h)
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 }
 
-// Left button presses place a new control point.
+/*
+Funzione da dare in input alla glutMouseFunc 
+
+serve per controllare i comandi di spostamento punti di controllo
+tramite mouse
+*/
 void myMouseFunc(int button, int state, int x, int y) {
+
+	/*condizione per controllare che tasto sinistro sia stato premuto e
+	mantenuto giù
+	con GLUT_LEFT_BUTTON controllo che sia stato premuto e con glut down
+	che sia mantenuto giù
+	*/
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		if (mouseOverIndex != -1) {
@@ -114,7 +165,16 @@ void myMouseFunc(int button, int state, int x, int y) {
 	}
 }
 
-void passive(int x, int y) {
+/*
+Funzione da dare in input alla glutPassiveMotionFunc
+
+Controlla gli spostamenti passivi del mouse, cioè quelli che avvengono
+senza che venga toccato un altro comando. Il compito di questa funzione
+è quello di attivare il flag mouse over index se si rileva che la distanza
+del puntatore ed uno dei punti di controllo disegnati è sotto una certa soglia, 
+cioè il puntatore è approssimabilmente sopra il punto.
+*/
+void myPassiveMotionFunction(int x, int y) {
 	float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
 	float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
 
@@ -132,8 +192,13 @@ void passive(int x, int y) {
 	glutPostRedisplay();
 }
 
-//spostamento punto di controllo i-esimo
-void motion(int x, int y) {
+/*
+Funzione da dare in input alla glutMotionFunc
+
+permette di aggiornare le posizioni de punti di controllo
+mentre vengono spostati
+*/
+void myMotionFunction(int x, int y) {
 	float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
 	float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
 
@@ -144,16 +209,11 @@ void motion(int x, int y) {
 	glutPostRedisplay();
 }
 
-// Add a new point to the end of the list.  
-// Remove the first point in the list if too many points.
-void removeLastPoint() {
-	if (NumPts > 0) {
-		NumPts--;
-	}
-}
-
-// Add a new point to the end of the list.  
-// Remove the first point in the list if too many points.
+/* 
+Funzione che permette di aggiungere un nuovo punto
+alla fine della lista. Si rimuove il primo punto
+nella lista se ci sono troppi punti.
+*/ 
 void addNewPoint(float x, float y) {
 	if (NumPts >= MaxNumPts) {
 		removeFirstPoint();
@@ -163,6 +223,7 @@ void addNewPoint(float x, float y) {
 	PointArray[NumPts][2] = 0;
 	NumPts++;
 }
+
 void initShader(void)
 {
 	GLenum ErrorCheckValue = glGetError();
@@ -175,6 +236,10 @@ void initShader(void)
 
 }
 
+
+/*
+nella init vanno tutte le cose che si fanno una volta sola, prima di renderizare
+*/
 void init(void)
 {
 
@@ -216,6 +281,15 @@ void deCasteljau(float t, float* result) {
 	result[2] = 0.0;
 }
 
+/*
+Questa funzione va in input alla funzione glut glutDisplayFunc
+
+è la funzione che effettivamente fa la renderizzazione.
+
+Come fa la drawArrays a sapere dove deve disegnare i punti?
+
+
+*/
 
 void drawScene(void)
 {
@@ -261,8 +335,6 @@ void drawScene(void)
 	glutSwapBuffers();
 }
 
-
-
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
@@ -281,8 +353,8 @@ int main(int argc, char** argv)
 
 	glutKeyboardFunc(myKeyboardFunc);
 	glutMouseFunc(myMouseFunc);
-	glutMotionFunc(motion);
-	glutPassiveMotionFunc(passive);
+	glutMotionFunc(myMotionFunction);
+	glutPassiveMotionFunc(myPassiveMotionFunction);
 
 	
 
