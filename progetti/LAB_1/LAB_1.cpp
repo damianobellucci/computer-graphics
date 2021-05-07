@@ -76,7 +76,10 @@ int NumPtsS = 0;
 
 float tempArray[MaxNumPts][3];
 float costante_subdivision = 0.5;
+
+//parametro di precisione suddivisione adattiva
 float quota_planarita = 0.01;
+
 int i, j, xy;
 float x = 0, y = 0;
 int numero_tratti;
