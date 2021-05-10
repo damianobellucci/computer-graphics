@@ -1,0 +1,28 @@
+Cosa ho fatto fino ad ora:
+-proiettile con moto parabolico
+-proiettile che non segue la navicella
+-ricarica proiettile quando esce dalla scena
+-possibilità di sparare i proiettili a destra e sinistra
+-ottimizzazione del calcolo dei virus colpiti
+-randomizzazione avversari
+
+-------------------------------------------------------------
+Cose da fare:
+
+-(da valutare) muovere navicella su e giù
+-radianti devono essere parametrici, così da variare angolo proiettile a seconda di inclinazione in gioco
+-problema: anche se navicella sta tutta a sinistra proiettile si rigenera quando ha raggiunto posizione 1500,500 da
+da navicella. proiettile deve rigenerarsi quando è fuori viewport, quindi la distanza per la quale si deve rigenerare
+proiettile non è dalla navicella a 500 ma da navicella a bordo schermo 
+-fare in modo che non si può risparare finché proiettile non è fuori da viewport (sennò poi si
+accodano, per evitarlo si dovrebbe gestire un sistema di proiettili dove ognuno viene gestito
+per conto suo), simularlo nel gioco con azione di "recharge". Con questo risolvo anche il problema
+di proiettile destro e sinistro inipendente.
+-capire se i due proiettili sono realmente indipendenti
+-quando virus tocca navicella la partita è persa
+
+-----
+Corrente:
+-fare in modo che avversari vengano spawnati in modo disordinato all'interno della scena
+ogni 4 secondi viene spawnato un avversario a caso all'interno della scena (ma distante da giocatore)
+e che si muove in modo casuale
