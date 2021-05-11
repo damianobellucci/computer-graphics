@@ -2,6 +2,24 @@
 #include "ShaderMaker.h"
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <vector>
+
+
+vector<int> posizioniXinizialiNemici = {};
+vector<int> posizioniYinizialiNemici = {};
+vector<bool> avversarioColpito = {};
+
+int rangeRandomAlg2(int min, int max) {
+	int n = max - min + 1;
+	int remainder = RAND_MAX % n;
+	int x;
+	do {
+		x = rand();
+	} while (x >= RAND_MAX - remainder);
+	return min + x % n;
+}
+
+int numeroNemici = 15;
 
 static unsigned int programId, programId_1;
 #define PI 3.14159265358979323846
@@ -98,12 +116,61 @@ double  degtorad(double angle) {
 	return angle * PI / 180;
 }
 
+vector<int> sfasamentoXnemici;
+vector<int> sfasamentoYnemici;
+
+vector<int> direzioneXnemici;
+vector<int> direzioneYnemici;
+
 
 void updateNemici(int value)
 {
 	frame++;
 	if (frame % 30 == 0)
 	{
+
+		for (int i = 0; i < numeroNemici; i++) {
+			sfasamentoXnemici.at(i)= (rand() % 10);
+			sfasamentoYnemici.at(i)=(rand() % 10);
+		}
+
+		for (int i = 0; i < numeroNemici; i++) {
+			if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)) > width-100 || (posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)<=100)) {
+				if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)) > width - 100)
+				{
+					direzioneXnemici.at(i) = direzioneXnemici.at(i) - 50;
+				}
+				else {
+					direzioneXnemici.at(i) = direzioneXnemici.at(i) + 50;
+				}
+			}
+			else {
+				int offset = 0;
+				if (rand() % 10 < 5) {
+					offset = -10;
+				}
+				else offset = +10;
+				direzioneXnemici.at(i) = direzioneXnemici.at(i) + offset;
+			}
+			if ((posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) > height - 100|| (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) <100) {
+				if ((posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) > height - 100) {
+					direzioneYnemici.at(i) = direzioneYnemici.at(i) - 50;
+				}
+				else {
+					direzioneYnemici.at(i) = direzioneYnemici.at(i) + 50;
+				}
+			}
+				
+			else {
+				int offset = 0;
+				if (rand() % 10 < 5) {
+					offset = -10;
+				}
+				else offset = +10;
+				direzioneYnemici.at(i) = direzioneYnemici.at(i) + offset;
+			}
+		}
+		/*
 		if (((rand() % 10 + 1)) <= 4){
 			dxnemici = dxnemici + (rand() % 10 + 20);
 
@@ -113,7 +180,7 @@ void updateNemici(int value)
 			dxnemici = dxnemici - (rand() % 10 + 20);
 
 			dynemici = dynemici - (rand() % 10 + 20);
-		}
+		}*/
 		
 
 	}
@@ -159,21 +226,25 @@ void updateProiettile2r(int value)
 	//Ordinata del proettile durante lo sparo
 	posy_Proiettile = parabolicY(v0Parabolic, counterParabolicRight / 15, radParabolic, gravityParabolic);
 
+	/*
 	cout << firePosition;
 	cout << " | ";
 	cout << posx_Proiettile;
 	cout << " | ";
 	cout << posy_Proiettile;
 	cout << "\n";
+	*/
 
 	//L'animazione deve avvenire finchè  l'ordinata del proiettile raggiunge un certo valore fissato
 	if (abs(posy_Proiettile) <= 500 && (firePosition+ (posx_Proiettile)) >= 0)
 		glutTimerFunc(5, updateProiettile2r, 0);
 	else {
+		/*
 		cout << posx_Proiettile;
 		cout << " | ";
 		cout << posy_Proiettile;
 		cout << "\n";
+		*/
 		posy_Proiettile = 0;
 		posx_Proiettile = 0;
 		counterParabolicRight = 0;
@@ -193,23 +264,26 @@ void updateProiettile2(int value)
 	//Ordinata del proettile durante lo sparo
 	posy_Proiettile= parabolicY(v0Parabolic, counterParabolic/15, radParabolic, gravityParabolic);
 
-
+	/*
 	cout << firePosition;
 	cout << " | ";
 	cout << posx_Proiettile;
 	cout << " | ";
 	cout << posy_Proiettile;
 	cout << "\n";
+	*/
 
 
 	//L'animazione deve avvenire finchè  l'ordinata del proiettile raggiunge un certo valore fissato
 	if (abs(posy_Proiettile) <= 500 && abs(firePosition + posx_Proiettile) <= width)
 		glutTimerFunc(5, updateProiettile2, 0);
 	else{
+		/*
 		cout << posx_Proiettile;
 		cout << " | ";
 		cout << posy_Proiettile;
 		cout << "\n";
+		*/
 		posy_Proiettile = 0;
 		posx_Proiettile = 0;
 		counterParabolic = 0;
@@ -315,15 +389,20 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'q':
+		if(!sparoInVolo){
 		pressing_attack = true;
 		updateProiettile2r(0);
 		firePosition = posx;
 		sparoInVolo = true;
+		}
 		break;
 	case 'e':
-		pressing_attack = true;
-		updateProiettile2(0);
-		firePosition = posx;
+		if (!sparoInVolo) {
+			pressing_attack = true;
+			updateProiettile2(0);
+			firePosition = posx;
+			sparoInVolo = true;
+		}
 		break;
 	case 'a':
 		pressing_left = true;
@@ -599,10 +678,42 @@ void initShader(void)
 }
 
 
+
+
 void init(void)
 {
+	for (int i = 0; i < numeroNemici; i++) {
+		avversarioColpito.push_back(false);
+	}
 
 	srand(time(NULL));
+	for (int i = 0; i < numeroNemici; i++) {
+		posizioniXinizialiNemici.push_back(rangeRandomAlg2(50, width - 50));
+		posizioniYinizialiNemici.push_back(rangeRandomAlg2(400, height - 100));
+		//posizioniXinizialiNemici.push_back(rand() % (width - 300 + 1) + 300);
+		//posizioniYinizialiNemici.push_back(rand() % (height - 300 + 1) + 300);
+	}
+
+	for (int i = 0; i < numeroNemici; i++) {
+		sfasamentoXnemici.push_back(0);
+		sfasamentoYnemici.push_back(0);
+	}
+
+	for (int i = 0; i < numeroNemici; i++) {
+
+		direzioneXnemici.push_back(-10);
+		direzioneYnemici.push_back(-10);
+	}
+	/*
+	for (int i = 0; i < numeroNemici; i++) {
+		cout << posizioniX.at(i);
+		cout << " | ";
+		cout << posizioniY.at(i);
+		cout << "\n";
+	}*/
+
+
+	vector<int> timeInstant{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 
 	//Disegno SPAZIO/CIELO
 	vec4 col_top = { 1.0,1.0,1.0, 0.8 };
@@ -686,6 +797,7 @@ void init(void)
 
 bool firstDrawVirus = false;
 
+
 void drawScene(void)
 {
 	glUniformMatrix4fv(MatProj, 1, GL_FALSE, value_ptr(Projection));
@@ -702,9 +814,6 @@ void drawScene(void)
 	glBindVertexArray(0);
 
 	//Disegno il proiettile
-
-
-
 	glBindVertexArray(VAO);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glPointSize(8.0);
@@ -734,11 +843,35 @@ void drawScene(void)
 	glBindVertexArray(VAO_NEMICO);
 	float passo_Nemici = ((float)width) / nemici_per_riga;
 	float passo_righe = 150;
+
+
+	for (int i = 0; i < numeroNemici; i++) {
+
+		{
+			Model = mat4(1.0);
+			//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
+
+			Model = translate(Model, vec3(posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i)+direzioneXnemici.at(i), posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i)+direzioneYnemici.at(i), 0));
+			Model = scale(Model, vec3(30.0, 30.0, 1.0));
+			Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
+			glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
+			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			// faccia e occhi
+			glDrawArrays(GL_TRIANGLES, 0, nVertices_Nemico - nvBocca - nvTentacoli);
+			glLineWidth(3.0);  // bocca
+			glDrawArrays(GL_LINE_STRIP, nVertices_Nemico - nvBocca - nvTentacoli, nvBocca);
+			glLineWidth(8.0); // tentacoli
+			glDrawArrays(GL_LINES, nVertices_Nemico - nvTentacoli, nvTentacoli);
+		}
+	}
+	/*
 	for (int i = 0; i < numero_di_righe; i++)
 	{
-		posyN = height - i * passo_righe - 20;
+		//posyN = height - i * passo_righe - 20;
+		posyN = height - i * passo_righe - 20-rand()%10;
 		for (int j = 0; j < nemici_per_riga; j++)
 		{
+			//posxN = j * (passo_Nemici)+passo_Nemici / 2;
 			posxN = j * (passo_Nemici)+passo_Nemici / 2;
 			if (!colpito[i][j]) {
 				Model = mat4(1.0);
@@ -755,9 +888,32 @@ void drawScene(void)
 				glDrawArrays(GL_LINES, nVertices_Nemico - nvTentacoli, nvTentacoli);
 			}
 		}
-	}
+	}*/
 	glBindVertexArray(0);
 
+	for (int i = 0; i < numeroNemici; i++) {
+		int posizioneXavversario;
+		int posizioneYavversario;
+		posizioneXavversario = (posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i));
+		posizioneYavversario = (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i));
+
+		if (
+			(
+				(firePosition + posx_Proiettile >= posizioneXavversario - 50)
+				&& (firePosition + posx_Proiettile <= posizioneXavversario + 50))
+			&&
+			((posy + posy_Proiettile >= posizioneYavversario - 50) && (posy + posy_Proiettile <= posizioneYavversario + 50))
+			)
+		{
+			if (!avversarioColpito.at(i)) {
+				avversarioColpito.at(i) = true;
+				printf("colpito %d", i);
+				cout << "\n";
+			}
+		}
+	}
+
+	/*
 	// calcolo virus colpiti
 	for (int i = 0; i < numero_di_righe; i++)
 	{
@@ -777,7 +933,7 @@ void drawScene(void)
 				}
 			}
 		}
-	}
+	}*/
 	glutSwapBuffers();
 }
 
