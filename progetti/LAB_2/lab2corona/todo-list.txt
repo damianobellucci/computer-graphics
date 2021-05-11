@@ -8,11 +8,17 @@ Cosa ho fatto fino ad ora:
 -avversari che restano all'interno della viewport
 -finchè proiettile è in volo non si può sparare
 -nuova logica per avversario colpito
+-nuova logica per avversario che scompare quando colpito
+-scelta da terminale numero di avversari (da ottimizzare con checkSanity)
+-proiettile scompare una volta che colpisce un avversario, invece di continuare a viaggiare
+-blocco e chiusura finistra quando giocatore viene preso da un avversario oppure giocatore vince
+-delay tra quando giocatore perde/vince e chiusura finistra (per evitare effetto troppo veloce di chiusura finestra)
+
 -------------------------------------------------------------
 Cose da fare:
 
-
-
+-valutare se disegnare la traiettoria del proiettile sempre
+-valutare se proiettile deve sparire dopo che ha colpito un nemico
 -(da valutare) muovere navicella su e giù
 -radianti devono essere parametrici, così da variare angolo proiettile a seconda di inclinazione in gioco
 -problema: anche se navicella sta tutta a sinistra proiettile si rigenera quando ha raggiunto posizione 1500,500 da
@@ -27,6 +33,4 @@ di proiettile destro e sinistro inipendente.
 
 -----
 Corrente:
--far sparire avversari quando colpiti
 -variare angolo dello sparo dinamicamente tramite tasti
-

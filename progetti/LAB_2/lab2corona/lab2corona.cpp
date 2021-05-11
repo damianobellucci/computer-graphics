@@ -3,7 +3,14 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <vector>
+#include <chrono>
+#include <thread>
 
+
+
+int window;
+int counterColpiti = 0;
+bool proiettileColpitoAvversario = false;
 
 vector<int> posizioniXinizialiNemici = {};
 vector<int> posizioniYinizialiNemici = {};
@@ -19,7 +26,7 @@ int rangeRandomAlg2(int min, int max) {
 	return min + x % n;
 }
 
-int numeroNemici = 15;
+int numeroNemici = 200;
 
 static unsigned int programId, programId_1;
 #define PI 3.14159265358979323846
@@ -235,8 +242,8 @@ void updateProiettile2r(int value)
 	cout << "\n";
 	*/
 
-	//L'animazione deve avvenire finchè  l'ordinata del proiettile raggiunge un certo valore fissato
-	if (abs(posy_Proiettile) <= 500 && (firePosition+ (posx_Proiettile)) >= 0)
+	//L'animazione deve avvenire finchè  l'ordinata del proiettile raggiunge un certo valore fissato e se non colpisce nessun avversario
+	if (abs(posy_Proiettile) <= 500 && (firePosition+ (posx_Proiettile)) >= 0 && !proiettileColpitoAvversario)
 		glutTimerFunc(5, updateProiettile2r, 0);
 	else {
 		/*
@@ -250,6 +257,7 @@ void updateProiettile2r(int value)
 		counterParabolicRight = 0;
 		firePosition = posx;
 		sparoInVolo = false;
+		proiettileColpitoAvversario = false;
 	}
 
 
@@ -275,7 +283,7 @@ void updateProiettile2(int value)
 
 
 	//L'animazione deve avvenire finchè  l'ordinata del proiettile raggiunge un certo valore fissato
-	if (abs(posy_Proiettile) <= 500 && abs(firePosition + posx_Proiettile) <= width)
+	if (abs(posy_Proiettile) <= 500 && abs(firePosition + posx_Proiettile) <= width && !proiettileColpitoAvversario)
 		glutTimerFunc(5, updateProiettile2, 0);
 	else{
 		/*
@@ -289,6 +297,7 @@ void updateProiettile2(int value)
 		counterParabolic = 0;
 		firePosition = posx;
 		sparoInVolo = false;
+		proiettileColpitoAvversario = false;
 	}
 
 
@@ -661,6 +670,9 @@ void disegna_nemico(vec4 color_top_Nemico, vec4 color_bot_Nemico, vec4 color_top
 		Nemico[cont + i] = Tentacoli[i];
 }
 
+
+
+
 void initShader(void)
 {
 	GLenum ErrorCheckValue = glGetError();
@@ -782,7 +794,7 @@ void init(void)
 		for (int j = 0; j < nemici_per_riga; j++)
 		{
 			colpito[i][j] = false;
-			printf("%s", colpito[i][j] ? "true \n" : "false \n");
+			//printf("%s", colpito[i][j] ? "true \n" : "false \n");
 		}
 	//Definisco il colore che verrà assegnato allo schermo
 	glClearColor(1.0, 0.5, 0.0, 1.0);
@@ -847,11 +859,12 @@ void drawScene(void)
 
 	for (int i = 0; i < numeroNemici; i++) {
 
+		if (!avversarioColpito.at(i))
 		{
 			Model = mat4(1.0);
 			//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
 
-			Model = translate(Model, vec3(posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i)+direzioneXnemici.at(i), posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i)+direzioneYnemici.at(i), 0));
+			Model = translate(Model, vec3(posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i), posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i), 0));
 			Model = scale(Model, vec3(30.0, 30.0, 1.0));
 			Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
 			glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
@@ -905,50 +918,105 @@ void drawScene(void)
 			((posy + posy_Proiettile >= posizioneYavversario - 50) && (posy + posy_Proiettile <= posizioneYavversario + 50))
 			)
 		{
-			if (!avversarioColpito.at(i)) {
+			if (!avversarioColpito.at(i) && !proiettileColpitoAvversario) {
+				proiettileColpitoAvversario = true;
+				counterColpiti++;
 				avversarioColpito.at(i) = true;
-				printf("colpito %d", i);
-				cout << "\n";
+				printf("\ncolpito avversario: %d\n", i);
+
+				printf("Avversari colpiti %d/%d\n", counterColpiti, numeroNemici);
 			}
 		}
 	}
 
-	/*
-	// calcolo virus colpiti
-	for (int i = 0; i < numero_di_righe; i++)
-	{
-		posyN = height - i * passo_righe - 20 + rand() % 20;
-		for (int j = 0; j < nemici_per_riga; j++)
+	bool makeSwapBuffer = true;
+
+	//controllo se navicella è stata presa da un virus
+	for (int i = 0; i < numeroNemici; i++) {
+		int posizioneXavversario;
+		int posizioneYavversario;
+		posizioneXavversario = (posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i));
+		posizioneYavversario = (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i));
+
+		if (
+			posizioneXavversario >= posx - 50
+			&&
+			posizioneXavversario <= posx + 50
+			&&
+			posizioneYavversario >= posy - 50
+			&&
+			posizioneYavversario <= posy + 50
+			)
 		{
-			posxN = j * (passo_Nemici)+passo_Nemici / 2 + rand() % 40;
-			//	printf("Posizione del proiettile: x= %f y=%f \n", posx + posx_Proiettile, posy + posy_Proiettile);
-			//	printf("BB nemico %d %d : xmin= %f ymin=%f  xmax=%f ymax=%f \n", i,j, posxN - 50 , posyN-50, + posx_Proiettile, posy + posy_Proiettile);
-			if (((firePosition + posx_Proiettile >= posxN + dxnemici - 50) && (firePosition + posx_Proiettile <= posxN + dxnemici + 50)) && ((posy + posy_Proiettile >= posyN + dynemici - 50) && (posy + posy_Proiettile <= posyN + dynemici + 50)))
+			cout << "\ngame over: sei stato colpito da un avversario\n";
+
+			//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
+
+			std::chrono::milliseconds timespan(3000);
+
+			std::this_thread::sleep_for(timespan);
+			makeSwapBuffer = false;
+
+			glutDestroyWindow(window);
+		}
+	}
+
+		//controllo vittoria
+
+	if (counterColpiti == numeroNemici) {
+		cout << "\nhai vinto: hai ucciso tutti gli avversari\n";
+		//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
+		std::chrono::milliseconds timespan(3000);
+		std::this_thread::sleep_for(timespan);
+		makeSwapBuffer = false;
+		glutDestroyWindow(window);
+
+
+	}
+
+
+		/*
+		// calcolo virus colpiti
+		for (int i = 0; i < numero_di_righe; i++)
+		{
+			posyN = height - i * passo_righe - 20 + rand() % 20;
+			for (int j = 0; j < nemici_per_riga; j++)
 			{
-				if (!colpito[i][j]) //se non era già stato colpito
+				posxN = j * (passo_Nemici)+passo_Nemici / 2 + rand() % 40;
+				//	printf("Posizione del proiettile: x= %f y=%f \n", posx + posx_Proiettile, posy + posy_Proiettile);
+				//	printf("BB nemico %d %d : xmin= %f ymin=%f  xmax=%f ymax=%f \n", i,j, posxN - 50 , posyN-50, + posx_Proiettile, posy + posy_Proiettile);
+				if (((firePosition + posx_Proiettile >= posxN + dxnemici - 50) && (firePosition + posx_Proiettile <= posxN + dxnemici + 50)) && ((posy + posy_Proiettile >= posyN + dynemici - 50) && (posy + posy_Proiettile <= posyN + dynemici + 50)))
 				{
-					NumeroColpiti++;
-					printf("Numero colpiti %d \n", NumeroColpiti);
-					colpito[i][j] = true;
+					if (!colpito[i][j]) //se non era già stato colpito
+					{
+						NumeroColpiti++;
+						printf("Numero colpiti %d \n", NumeroColpiti);
+						colpito[i][j] = true;
+					}
 				}
 			}
-		}
-	}*/
-	glutSwapBuffers();
+		}*/
+
+
+		
+
+	
+	if (makeSwapBuffer)
+	{
+		glutSwapBuffers();
+	}
 }
-
-void spawnEnemies(int a)
-{
-	nemici_per_riga++;
-	glutTimerFunc(500, spawnEnemies, 0);
-
-	glutPostRedisplay();
-}
-
 
 
 int main(int argc, char* argv[])
 {
+	//scelta da terminale del numero di nemici
+	/*
+	cout << "Numero nemici: ";
+	cin >> numeroNemici;
+	*/
+
+		
 	glutInit(&argc, argv);
 
 	glutInitContextVersion(4, 0);
@@ -958,7 +1026,10 @@ int main(int argc, char* argv[])
 
 	glutInitWindowSize(width, height);
 	glutInitWindowPosition(50, 50);
-	glutCreateWindow("2D Game COV-19");
+	window = glutCreateWindow("2D Game COV-19");
+
+
+
 	glutDisplayFunc(drawScene);
 	//Evento tastiera tasi premuti
 	glutKeyboardFunc(keyboardPressedEvent);
@@ -968,7 +1039,7 @@ int main(int argc, char* argv[])
 	glutTimerFunc(500, update, 0);
 	glutTimerFunc(500, updateV, 0);
 	glutTimerFunc(500, updateNemici, 0);
-	glutTimerFunc(500, spawnEnemies, 0);
+
 
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -981,4 +1052,6 @@ int main(int argc, char* argv[])
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glutMainLoop();
+
+	
 }
