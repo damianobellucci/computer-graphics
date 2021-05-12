@@ -6,7 +6,7 @@
 #include <chrono>
 #include <thread>
 
-
+int checkSwapBuffer = 0;
 
 int window;
 int counterColpiti = 0;
@@ -15,6 +15,7 @@ bool proiettileColpitoAvversario = false;
 vector<int> posizioniXinizialiNemici = {};
 vector<int> posizioniYinizialiNemici = {};
 vector<bool> avversarioColpito = {};
+vector<bool> avversarioDisattivato = {};
 
 int rangeRandomAlg2(int min, int max) {
 	int n = max - min + 1;
@@ -26,7 +27,7 @@ int rangeRandomAlg2(int min, int max) {
 	return min + x % n;
 }
 
-int numeroNemici = 200;
+int numeroNemici = 20;
 
 static unsigned int programId, programId_1;
 #define PI 3.14159265358979323846
@@ -431,6 +432,21 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 	case 's':
 		pressing_down = true;
 		break;
+	case 'p':
+		if (!sparoInVolo && radParabolic< 1.3854) {
+			radParabolic = radParabolic + 0.1;
+			/*
+			cout << "\n";
+			cout << radParabolic;
+			cout << "\n";
+			*/
+		}
+		break;
+	case 'l':
+		if (!sparoInVolo && radParabolic> 0.185399) {
+			radParabolic = radParabolic - 0.1;
+		}
+		break;
 	case 27:
 		exit(0);
 		break;
@@ -716,6 +732,10 @@ void init(void)
 		direzioneXnemici.push_back(-10);
 		direzioneYnemici.push_back(-10);
 	}
+
+	for (int i = 0; i < numeroNemici; i++) {
+		avversarioDisattivato.push_back(false);
+	}
 	/*
 	for (int i = 0; i < numeroNemici; i++) {
 		cout << posizioniX.at(i);
@@ -904,6 +924,7 @@ void drawScene(void)
 	}*/
 	glBindVertexArray(0);
 
+	//controllo se avversario è stato colpito da proiettile
 	for (int i = 0; i < numeroNemici; i++) {
 		int posizioneXavversario;
 		int posizioneYavversario;
@@ -916,9 +937,12 @@ void drawScene(void)
 				&& (firePosition + posx_Proiettile <= posizioneXavversario + 50))
 			&&
 			((posy + posy_Proiettile >= posizioneYavversario - 50) && (posy + posy_Proiettile <= posizioneYavversario + 50))
+			&&
+			!avversarioDisattivato.at(i)
 			)
 		{
 			if (!avversarioColpito.at(i) && !proiettileColpitoAvversario) {
+				avversarioDisattivato.at(i) = true;
 				proiettileColpitoAvversario = true;
 				counterColpiti++;
 				avversarioColpito.at(i) = true;
@@ -946,6 +970,8 @@ void drawScene(void)
 			posizioneYavversario >= posy - 50
 			&&
 			posizioneYavversario <= posy + 50
+			&&
+			!avversarioDisattivato.at(i)
 			)
 		{
 			cout << "\ngame over: sei stato colpito da un avversario\n";
@@ -963,13 +989,15 @@ void drawScene(void)
 
 		//controllo vittoria
 
-	if (counterColpiti == numeroNemici) {
+	if (counterColpiti == numeroNemici && checkSwapBuffer<1) {
 		cout << "\nhai vinto: hai ucciso tutti gli avversari\n";
 		//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
-		std::chrono::milliseconds timespan(3000);
-		std::this_thread::sleep_for(timespan);
-		makeSwapBuffer = false;
-		glutDestroyWindow(window);
+		//std::chrono::milliseconds timespan(3000);
+		//std::this_thread::sleep_for(timespan);
+		checkSwapBuffer++;
+
+		//makeSwapBuffer = false;
+		//glutDestroyWindow(window);
 
 
 	}
@@ -1001,9 +1029,18 @@ void drawScene(void)
 		
 
 	
-	if (makeSwapBuffer)
+	if (checkSwapBuffer<2)
 	{
 		glutSwapBuffers();
+	}
+	else {
+		std::chrono::milliseconds timespan(3000);
+		std::this_thread::sleep_for(timespan);
+		glutDestroyWindow(window);
+	}
+
+	if (checkSwapBuffer == 1) {
+		checkSwapBuffer++;
 	}
 }
 
@@ -1036,9 +1073,9 @@ int main(int argc, char* argv[])
 	//Evento tastiera tasto rilasciato
 
 	glutKeyboardUpFunc(keyboardReleasedEvent);
-	glutTimerFunc(500, update, 0);
-	glutTimerFunc(500, updateV, 0);
-	glutTimerFunc(500, updateNemici, 0);
+	glutTimerFunc(50, update, 0);
+	glutTimerFunc(50, updateV, 0);
+	glutTimerFunc(50, updateNemici, 0);
 
 
 	glewExperimental = GL_TRUE;

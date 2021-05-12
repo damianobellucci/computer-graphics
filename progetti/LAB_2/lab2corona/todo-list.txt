@@ -13,24 +13,12 @@ Cosa ho fatto fino ad ora:
 -proiettile scompare una volta che colpisce un avversario, invece di continuare a viaggiare
 -blocco e chiusura finistra quando giocatore viene preso da un avversario oppure giocatore vince
 -delay tra quando giocatore perde/vince e chiusura finistra (per evitare effetto troppo veloce di chiusura finestra)
-
+-variare angolo dello sparo dinamicamente tramite tasti
+-risolto problema che quando si colpiva l'ultimo nemico non si vedeva il proiettile su di esso
 -------------------------------------------------------------
 Cose da fare:
-
--valutare se disegnare la traiettoria del proiettile sempre
--valutare se proiettile deve sparire dopo che ha colpito un nemico
--(da valutare) muovere navicella su e giù
--radianti devono essere parametrici, così da variare angolo proiettile a seconda di inclinazione in gioco
--problema: anche se navicella sta tutta a sinistra proiettile si rigenera quando ha raggiunto posizione 1500,500 da
-da navicella. proiettile deve rigenerarsi quando è fuori viewport, quindi la distanza per la quale si deve rigenerare
-proiettile non è dalla navicella a 500 ma da navicella a bordo schermo 
--fare in modo che non si può risparare finché proiettile non è fuori da viewport (sennò poi si
-accodano, per evitarlo si dovrebbe gestire un sistema di proiettili dove ognuno viene gestito
-per conto suo), simularlo nel gioco con azione di "recharge". Con questo risolvo anche il problema
-di proiettile destro e sinistro inipendente.
--capire se i due proiettili sono realmente indipendenti
--quando virus tocca navicella la partita è persa
+-
 
 -----
 Corrente:
--variare angolo dello sparo dinamicamente tramite tasti
+-implementare il particle system sulla scia del proiettile
