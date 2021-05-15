@@ -23,13 +23,19 @@ Cosa ho fatto fino ad ora:
 -parametrizzazione della posizione del proiettile in base alla parametrizzazione del giocatore
 -palla al posto di proiettile puntiforme
 -corretto posizionamento della palla tramite le trasformazioni
+-aggiustamento bound colpimento avversari in base alle nuove geometrie
+-rifatti i bound per il caso in cui il giocatore è colpito
+-rifatto il rimbalzo contro il muro di destra secondo la nuova geometria del giocatore
+
 -------------------------------------------------------------
 Cose da fare:
 -colore del proiettile bianco si confonde con il bianco del quadrato avversario, da aggiustare
 -da aggiornare bound colpimento giocatore da avversario: DA FARE UNA VOLTA DEFINITA LA NUOVA GEMETRIA DELL'AVVERSARIO
 -(DA VALUTARE) implementare il particle system sulla scia del proiettile
 -da togliere lampeggiamento avversari
+-capire perché lampeggiano gli avversari
 
 -----
 Corrente:
--aggiungere bound dato da larghezza palla quando si controlla se si sono presi gli avversari
+-fare sistema particellare come scia della palla
+

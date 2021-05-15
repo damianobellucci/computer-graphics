@@ -8,5 +8,6 @@ uniform float t;
 
 void main()
 {
-    FragColor = vec4(ourColor*t);
+    //FragColor = vec4(ourColor*t);
+    FragColor = vec4(ourColor);
 }

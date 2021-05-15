@@ -10,6 +10,7 @@ float dimensionePalla = 30.0;
 int triangoliPalla = 9;
 float raggioxPalla = 0.6;
 float raggioyPalla = 0.6;
+float dimensioneNemici = 30.0;
 
 int larghezzaGiocatore = 200;
 int altezzaGiocatore = 25;
@@ -35,7 +36,7 @@ int rangeRandomAlg2(int min, int max) {
 	return min + x % n;
 }
 
-int numeroNemici = 20;
+int numeroNemici = 200;
 
 static unsigned int programId, programId_1;
 #define PI 3.14159265358979323846
@@ -97,8 +98,8 @@ float posx_Proiettile = larghezzaGiocatore/2, posy_Proiettile = altezzaGiocatore
 double VelocitaOrizzontale = 0; //velocita orizzontale (pixel per frame)
 int scuoti = 0;
 double accelerazione = 1; // forza di accelerazione data dalla tastiera
-float posx = width / 2; //coordinate sul piano della posizione iniziale della navicella
-float posy = height * 0.2;
+float posx = width / 2-larghezzaGiocatore/2; //coordinate sul piano della posizione iniziale della navicella
+float posy = height * 0.225;
 float posizione_di_equilibrio = posy;
 float angolo = 0;
 
@@ -424,8 +425,8 @@ void updateV(int a)
 		posx = 0;
 		VelocitaOrizzontale = -VelocitaOrizzontale * 0.8;
 	}
-	if (posx > width) {
-		posx = width;
+	if (posx+larghezzaGiocatore > width) {
+		posx = width- larghezzaGiocatore;
 		VelocitaOrizzontale = -VelocitaOrizzontale * 0.8;
 	}
 	// calcolo y come somma dei seguenti contributi: pos. di equilibrio, oscillazione periodica
@@ -571,6 +572,8 @@ void disegna_piano(float x, float y, float width, float height, vec4 color_top, 
 	piano[5].r = color_bot.r; piano[5].g = color_bot.g; piano[5].b = color_bot.b; piano[5].a = color_bot.a;
 }
 
+float dimensioni_rettangolox = 1;
+float dimensioni_rettangoloy = 1;
 
 void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* GiocatoreRettangolare)
 {
@@ -585,14 +588,14 @@ void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggi
 		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_top.a;
 
 		//secondo  vertice triangolo
-		GiocatoreRettangolare[comp + 1].x = cx+200;
+		GiocatoreRettangolare[comp + 1].x = cx+ dimensioni_rettangolox;
 		GiocatoreRettangolare[comp + 1].y = cy ;
 		GiocatoreRettangolare[comp + 1].z = 0.0;
 		GiocatoreRettangolare[comp + 1].r = color_bot.r; GiocatoreRettangolare[comp + 1].g = color_bot.g; GiocatoreRettangolare[comp + 1].b = color_bot.b; GiocatoreRettangolare[comp + 1].a = color_bot.a;
 
 		//terzo  vertice triangolo
 		GiocatoreRettangolare[comp + 2].x = cx;
-		GiocatoreRettangolare[comp + 2].y = cy + altezzaGiocatore;
+		GiocatoreRettangolare[comp + 2].y = cy + dimensioni_rettangoloy;
 		GiocatoreRettangolare[comp + 2].z = 0.0;
 		GiocatoreRettangolare[comp + 2].r = color_bot.r; GiocatoreRettangolare[comp + 2].g = color_bot.g; GiocatoreRettangolare[comp + 2].b = color_bot.b; GiocatoreRettangolare[comp + 2].a = color_bot.a;
 
@@ -603,20 +606,20 @@ void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggi
 	for (int i = 0; i < 1; i++)
 	{
 		//primo vertice triangolo
-		GiocatoreRettangolare[comp].x = cx + larghezzaGiocatore;
-		GiocatoreRettangolare[comp].y = cy+ altezzaGiocatore;
+		GiocatoreRettangolare[comp].x = cx + dimensioni_rettangolox;
+		GiocatoreRettangolare[comp].y = cy+ dimensioni_rettangoloy;
 		GiocatoreRettangolare[comp].z = 0.0;
 		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_bot.a;
 
 		//secondo  vertice triangolo
-		GiocatoreRettangolare[comp + 1].x = cx+ larghezzaGiocatore;
+		GiocatoreRettangolare[comp + 1].x = cx+ dimensioni_rettangolox;
 		GiocatoreRettangolare[comp + 1].y = cy;
 		GiocatoreRettangolare[comp + 1].z = 0.0;
 		GiocatoreRettangolare[comp + 1].r = color_bot.r; GiocatoreRettangolare[comp + 1].g = color_bot.g; GiocatoreRettangolare[comp + 1].b = color_bot.b; GiocatoreRettangolare[comp + 1].a = color_bot.a;
 
 		//terzo  vertice triangolo
 		GiocatoreRettangolare[comp + 2].x = cx;
-		GiocatoreRettangolare[comp + 2].y = cy + altezzaGiocatore;
+		GiocatoreRettangolare[comp + 2].y = cy + dimensioni_rettangoloy;
 		GiocatoreRettangolare[comp + 2].z = 0.0;
 		GiocatoreRettangolare[comp + 2].r = color_bot.r; GiocatoreRettangolare[comp + 2].g = color_bot.g; GiocatoreRettangolare[comp + 2].b = color_bot.b; GiocatoreRettangolare[comp + 2].a = color_top.a;
 
@@ -937,7 +940,7 @@ void drawScene(void)
 	glBindVertexArray(VAO);
 	Model = mat4(1.0);
 	Model = translate(Model, vec3(posx, posy, 0.0));
-	//Model = scale(Model, vec3(80.0, 20.0, 1.0));
+	Model = scale(Model, vec3(larghezzaGiocatore, altezzaGiocatore, 1.0));
 	//Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
 	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
 	glDrawArrays(GL_TRIANGLES, 0, nVertices_Navicella - 1);
@@ -989,7 +992,7 @@ void drawScene(void)
 			//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
 
 			Model = translate(Model, vec3(posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i), posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i), 0));
-			Model = scale(Model, vec3(30.0, 30.0, 1.0));
+			Model = scale(Model, vec3(dimensioneNemici, dimensioneNemici, 1.0));
 			//Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
 			glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
 			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1038,10 +1041,10 @@ void drawScene(void)
 		int bound = 60;
 		if (
 			(
-				(firePosition + posx_Proiettile >= posizioneXavversario )
-				&& (firePosition + posx_Proiettile <= posizioneXavversario + bound))
+				(firePosition + posx_Proiettile+dimensionePalla/2 >= posizioneXavversario )
+				&& (firePosition + posx_Proiettile- dimensionePalla / 2 <= posizioneXavversario + bound))
 			&&
-			((posy + posy_Proiettile >= posizioneYavversario ) && (posy + posy_Proiettile <= posizioneYavversario + bound))
+			((posy + posy_Proiettile+ dimensionePalla / 2 >= posizioneYavversario ) && (posy + posy_Proiettile- dimensionePalla / 2 <= posizioneYavversario + bound))
 			&&
 			!avversarioDisattivato.at(i)
 			)
@@ -1068,13 +1071,15 @@ void drawScene(void)
 		posizioneYavversario = (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i));
 
 		if (
-			posizioneXavversario >= posx
-			&&
-			posizioneXavversario <= posx + 60
-			&&
-			posizioneYavversario >= posy
-			&&
-			posizioneYavversario <= posy + 60
+			(
+				posizioneXavversario + dimensioneNemici >= posx
+				&&
+				posizioneXavversario <= posx + larghezzaGiocatore
+				&&
+				posizioneYavversario   <= posy + altezzaGiocatore
+				&&
+				posizioneYavversario+ dimensioneNemici>=posy
+			)
 			&&
 			!avversarioDisattivato.at(i)
 			)
