@@ -6,6 +6,14 @@
 #include <chrono>
 #include <thread>
 
+float dimensionePalla = 30.0;
+int triangoliPalla = 9;
+float raggioxPalla = 0.6;
+float raggioyPalla = 0.6;
+
+int larghezzaGiocatore = 200;
+int altezzaGiocatore = 25;
+
 int checkSwapBuffer = 0;
 
 int window;
@@ -32,8 +40,8 @@ int numeroNemici = 20;
 static unsigned int programId, programId_1;
 #define PI 3.14159265358979323846
 
-unsigned int VAO, VAO_CIELO, VAO_NEMICO;
-unsigned int VBO, VBO_C, VBO_N, loc, MatProj, MatModel, MatProj1, MatModel1;
+unsigned int VAO, VAO_CIELO, VAO_NEMICO,VAO_PALLA;
+unsigned int VBO, VBO_C, VBO_N, loc, MatProj, MatModel, MatProj1, MatModel1,VBO_PALLA;
 
 // Include GLM; libreria matematica per le opengl
 #include <glm/glm.hpp>
@@ -66,10 +74,12 @@ int nVertices_Navicella = 12 * nTriangles + 1;
 int nvBocca = 5;
 int nvTentacoli = 16;
 int nVertices_Nemico = 3 * nTriangles + 2 * 3 * nTriangles + nvBocca + nvTentacoli;
+int nVertices_PallaProiettile = 24;
 
-Point* Navicella = new Point[nVertices_Navicella];
+Point* Navicella = new Point[7];
 Point* Nemico = new Point[nVertices_Nemico];
-
+Point* giocatoreRettangolare = new Point[7];
+Point* PallaProiettile = new Point[nVertices_PallaProiettile];
 int vertices_cielo = 6;
 Point* Cielo = new Point[vertices_cielo];
 
@@ -81,7 +91,7 @@ int height = 720;
 float t;
 
 //posizione relativa del proiettile rispetto alla navicella
-float posx_Proiettile = 0, posy_Proiettile = 0;
+float posx_Proiettile = larghezzaGiocatore/2, posy_Proiettile = altezzaGiocatore;
 
 //ANIMARE V
 double VelocitaOrizzontale = 0; //velocita orizzontale (pixel per frame)
@@ -103,7 +113,7 @@ bool pressing_rotate_d = false;
 
 bool** colpito;
 float angoloV = 0;
-double range_fluttuazione = 15; // fluttuazione su-gi 
+double range_fluttuazione = 0; // fluttuazione su-gi 
 double angle = 0; // angolo di fluttuazione
 double angle_offset = 10; // quanto   accentuata l'oscillazione angolare
 double float_yoffset = 0; // distacco dalla posizione d'equilibrio 
@@ -130,26 +140,56 @@ vector<int> sfasamentoYnemici;
 vector<int> direzioneXnemici;
 vector<int> direzioneYnemici;
 
+void disegna_cerchio5(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio)
+{
+	int i;
+	float stepA = (2 * PI) / triangoliPalla;
+
+	int comp = 0;
+	for (i = 0; i < triangoliPalla; i++)
+	{
+		Cerchio[comp].x = cx + cos((double)i * stepA) * raggiox;
+		Cerchio[comp].y = cy + sin((double)i * stepA) * raggioy;
+		Cerchio[comp].z = 0.0;
+		Cerchio[comp].r = color_top.r; Cerchio[comp].g = color_top.g; Cerchio[comp].b = color_top.b; Cerchio[comp].a = color_top.a;
+
+		Cerchio[comp + 1].x = cx + cos((double)(i + 1) * stepA) * raggiox;
+		Cerchio[comp + 1].y = cy + sin((double)(i + 1) * stepA) * raggioy;
+		Cerchio[comp + 1].z = 0.0;
+		Cerchio[comp + 1].r = color_top.r; Cerchio[comp + 1].g = color_top.g; Cerchio[comp + 1].b = color_top.b; Cerchio[comp + 1].a = color_top.a;
+
+		Cerchio[comp + 2].x = cx;
+		Cerchio[comp + 2].y = cy;
+		Cerchio[comp + 2].z = 0.0;
+		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_bot.a;
+
+		comp += 3;
+	}
+}
 
 void updateNemici(int value)
 {
+	int bound = 60;
+	int distaccoDaParete = 20;
+	int entitaRimbalzo = 25;
+
 	frame++;
 	if (frame % 30 == 0)
 	{
 
 		for (int i = 0; i < numeroNemici; i++) {
-			sfasamentoXnemici.at(i)= (rand() % 10);
-			sfasamentoYnemici.at(i)=(rand() % 10);
+			sfasamentoXnemici.at(i) = (rand() % 10);
+			sfasamentoYnemici.at(i) = (rand() % 10);
 		}
 
 		for (int i = 0; i < numeroNemici; i++) {
-			if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)) > width-100 || (posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)<=100)) {
-				if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)) > width - 100)
+			if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)) + bound > width - distaccoDaParete || (posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i) <= distaccoDaParete)) {
+				if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i))+ bound > width - distaccoDaParete)
 				{
-					direzioneXnemici.at(i) = direzioneXnemici.at(i) - 50;
+					direzioneXnemici.at(i) = direzioneXnemici.at(i) - entitaRimbalzo;
 				}
 				else {
-					direzioneXnemici.at(i) = direzioneXnemici.at(i) + 50;
+					direzioneXnemici.at(i) = direzioneXnemici.at(i) + entitaRimbalzo;
 				}
 			}
 			else {
@@ -160,15 +200,15 @@ void updateNemici(int value)
 				else offset = +10;
 				direzioneXnemici.at(i) = direzioneXnemici.at(i) + offset;
 			}
-			if ((posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) > height - 100|| (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) <100) {
-				if ((posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) > height - 100) {
-					direzioneYnemici.at(i) = direzioneYnemici.at(i) - 50;
+			if ((posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) + bound > height - distaccoDaParete || (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) < distaccoDaParete) {
+				if ((posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i)) + bound > height - distaccoDaParete) {
+					direzioneYnemici.at(i) = direzioneYnemici.at(i) - entitaRimbalzo;
 				}
 				else {
-					direzioneYnemici.at(i) = direzioneYnemici.at(i) + 50;
+					direzioneYnemici.at(i) = direzioneYnemici.at(i) + entitaRimbalzo;
 				}
 			}
-				
+
 			else {
 				int offset = 0;
 				if (rand() % 10 < 5) {
@@ -189,7 +229,7 @@ void updateNemici(int value)
 
 			dynemici = dynemici - (rand() % 10 + 20);
 		}*/
-		
+
 
 	}
 	glutTimerFunc(5, updateNemici, 0);
@@ -210,11 +250,13 @@ void update(int a)
 }
 
 
-double radParabolic =  PI / 4;
+double radParabolic = PI / 4;
 double gravityParabolic = 5;
 double v0Parabolic = 100;
 double counterParabolic = 0;
 double counterParabolicRight = 0;
+double x0Parabolic = larghezzaGiocatore / 2;
+double y0Parabolic = altezzaGiocatore+dimensionePalla;
 
 int parabolicX(int v0, int t, double rad)
 {
@@ -230,9 +272,9 @@ void updateProiettile2r(int value)
 {
 	counterParabolicRight++;
 	//Ascissa del proiettile durante lo sparo
-	posx_Proiettile = -parabolicX(v0Parabolic, counterParabolicRight / 15, radParabolic);
+	posx_Proiettile = x0Parabolic -parabolicX(v0Parabolic, counterParabolicRight / 15, radParabolic);
 	//Ordinata del proettile durante lo sparo
-	posy_Proiettile = parabolicY(v0Parabolic, counterParabolicRight / 15, radParabolic, gravityParabolic);
+	posy_Proiettile = y0Parabolic+ parabolicY(v0Parabolic, counterParabolicRight / 15, radParabolic, gravityParabolic);
 
 	/*
 	cout << firePosition;
@@ -244,7 +286,7 @@ void updateProiettile2r(int value)
 	*/
 
 	//L'animazione deve avvenire finchè  l'ordinata del proiettile raggiunge un certo valore fissato e se non colpisce nessun avversario
-	if (abs(posy_Proiettile) <= 500 && (firePosition+ (posx_Proiettile)) >= 0 && !proiettileColpitoAvversario)
+	if (abs(posy_Proiettile) <= 500 && (firePosition + (posx_Proiettile)) >= 0 && !proiettileColpitoAvversario)
 		glutTimerFunc(5, updateProiettile2r, 0);
 	else {
 		/*
@@ -253,8 +295,8 @@ void updateProiettile2r(int value)
 		cout << posy_Proiettile;
 		cout << "\n";
 		*/
-		posy_Proiettile = 0;
-		posx_Proiettile = 0;
+		posy_Proiettile = altezzaGiocatore+ dimensionePalla;
+		posx_Proiettile = larghezzaGiocatore/2;
 		counterParabolicRight = 0;
 		firePosition = posx;
 		sparoInVolo = false;
@@ -269,9 +311,9 @@ void updateProiettile2(int value)
 {
 	counterParabolic++;
 	//Ascissa del proiettile durante lo sparo
-	posx_Proiettile = parabolicX(v0Parabolic, counterParabolic/15,radParabolic);
+	posx_Proiettile = x0Parabolic +parabolicX(v0Parabolic, counterParabolic / 15, radParabolic);
 	//Ordinata del proettile durante lo sparo
-	posy_Proiettile= parabolicY(v0Parabolic, counterParabolic/15, radParabolic, gravityParabolic);
+	posy_Proiettile = y0Parabolic+ parabolicY(v0Parabolic, counterParabolic / 15, radParabolic, gravityParabolic);
 
 	/*
 	cout << firePosition;
@@ -286,15 +328,15 @@ void updateProiettile2(int value)
 	//L'animazione deve avvenire finchè  l'ordinata del proiettile raggiunge un certo valore fissato
 	if (abs(posy_Proiettile) <= 500 && abs(firePosition + posx_Proiettile) <= width && !proiettileColpitoAvversario)
 		glutTimerFunc(5, updateProiettile2, 0);
-	else{
+	else {
 		/*
 		cout << posx_Proiettile;
 		cout << " | ";
 		cout << posy_Proiettile;
 		cout << "\n";
 		*/
-		posy_Proiettile = 0;
-		posx_Proiettile = 0;
+		posy_Proiettile = altezzaGiocatore+ dimensionePalla;
+		posx_Proiettile = larghezzaGiocatore / 2;
 		counterParabolic = 0;
 		firePosition = posx;
 		sparoInVolo = false;
@@ -399,11 +441,11 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'q':
-		if(!sparoInVolo){
-		pressing_attack = true;
-		updateProiettile2r(0);
-		firePosition = posx;
-		sparoInVolo = true;
+		if (!sparoInVolo) {
+			pressing_attack = true;
+			updateProiettile2r(0);
+			firePosition = posx;
+			sparoInVolo = true;
 		}
 		break;
 	case 'e':
@@ -433,7 +475,7 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 		pressing_down = true;
 		break;
 	case 'p':
-		if (!sparoInVolo && radParabolic< 1.3854) {
+		if (!sparoInVolo && radParabolic < 1.3854) {
 			radParabolic = radParabolic + 0.1;
 			/*
 			cout << "\n";
@@ -443,7 +485,7 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 		}
 		break;
 	case 'l':
-		if (!sparoInVolo && radParabolic> 0.185399) {
+		if (!sparoInVolo && radParabolic > 0.185399) {
 			radParabolic = radParabolic - 0.1;
 		}
 		break;
@@ -529,129 +571,128 @@ void disegna_piano(float x, float y, float width, float height, vec4 color_top, 
 	piano[5].r = color_bot.r; piano[5].g = color_bot.g; piano[5].b = color_bot.b; piano[5].a = color_bot.a;
 }
 
+
+void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* GiocatoreRettangolare)
+{
+
+	int comp = 0;
+	for (int i = 0; i < 1; i++)
+	{
+		//primo vertice triangolo
+		GiocatoreRettangolare[comp].x = cx;
+		GiocatoreRettangolare[comp].y = cy;
+		GiocatoreRettangolare[comp].z = 0.0;
+		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_top.a;
+
+		//secondo  vertice triangolo
+		GiocatoreRettangolare[comp + 1].x = cx+200;
+		GiocatoreRettangolare[comp + 1].y = cy ;
+		GiocatoreRettangolare[comp + 1].z = 0.0;
+		GiocatoreRettangolare[comp + 1].r = color_bot.r; GiocatoreRettangolare[comp + 1].g = color_bot.g; GiocatoreRettangolare[comp + 1].b = color_bot.b; GiocatoreRettangolare[comp + 1].a = color_bot.a;
+
+		//terzo  vertice triangolo
+		GiocatoreRettangolare[comp + 2].x = cx;
+		GiocatoreRettangolare[comp + 2].y = cy + altezzaGiocatore;
+		GiocatoreRettangolare[comp + 2].z = 0.0;
+		GiocatoreRettangolare[comp + 2].r = color_bot.r; GiocatoreRettangolare[comp + 2].g = color_bot.g; GiocatoreRettangolare[comp + 2].b = color_bot.b; GiocatoreRettangolare[comp + 2].a = color_bot.a;
+
+		comp += 3;
+	}
+
+
+	for (int i = 0; i < 1; i++)
+	{
+		//primo vertice triangolo
+		GiocatoreRettangolare[comp].x = cx + larghezzaGiocatore;
+		GiocatoreRettangolare[comp].y = cy+ altezzaGiocatore;
+		GiocatoreRettangolare[comp].z = 0.0;
+		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_bot.a;
+
+		//secondo  vertice triangolo
+		GiocatoreRettangolare[comp + 1].x = cx+ larghezzaGiocatore;
+		GiocatoreRettangolare[comp + 1].y = cy;
+		GiocatoreRettangolare[comp + 1].z = 0.0;
+		GiocatoreRettangolare[comp + 1].r = color_bot.r; GiocatoreRettangolare[comp + 1].g = color_bot.g; GiocatoreRettangolare[comp + 1].b = color_bot.b; GiocatoreRettangolare[comp + 1].a = color_bot.a;
+
+		//terzo  vertice triangolo
+		GiocatoreRettangolare[comp + 2].x = cx;
+		GiocatoreRettangolare[comp + 2].y = cy + altezzaGiocatore;
+		GiocatoreRettangolare[comp + 2].z = 0.0;
+		GiocatoreRettangolare[comp + 2].r = color_bot.r; GiocatoreRettangolare[comp + 2].g = color_bot.g; GiocatoreRettangolare[comp + 2].b = color_bot.b; GiocatoreRettangolare[comp + 2].a = color_top.a;
+
+		comp += 3;
+	}
+
+	GiocatoreRettangolare[comp].x = 0;
+	GiocatoreRettangolare[comp].y = 0;
+	GiocatoreRettangolare[comp].z = 0;
+	GiocatoreRettangolare[comp].r = 1;
+	GiocatoreRettangolare[comp].g = 1;
+	GiocatoreRettangolare[comp].b = 1;
+	GiocatoreRettangolare[comp].a = 1;
+}
+
 void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio)
 {
-	int i;
+
 	float stepA = (2 * PI) / nTriangles;
 
 	int comp = 0;
-	for (i = 0; i < nTriangles; i++)
+	for (int i = 0; i < 1; i++)
 	{
-		Cerchio[comp].x = cx + cos((double)i * stepA) * raggiox;
-		Cerchio[comp].y = cy + sin((double)i * stepA) * raggioy;
+		//primo vertice triangolo
+		Cerchio[comp].x = cx  ;
+		Cerchio[comp].y = cy ;
 		Cerchio[comp].z = 0.0;
-		Cerchio[comp].r = color_top.r; Cerchio[comp].g = color_top.g; Cerchio[comp].b = color_top.b; Cerchio[comp].a = color_top.a;
+		Cerchio[comp].r = color_bot.r; Cerchio[comp].g = color_bot.g; Cerchio[comp].b = color_bot.b; Cerchio[comp].a = color_top.a;
 
-		Cerchio[comp + 1].x = cx + cos((double)(i + 1) * stepA) * raggiox;
-		Cerchio[comp + 1].y = cy + sin((double)(i + 1) * stepA) * raggioy;
+		//secondo  vertice triangolo
+		Cerchio[comp + 1].x = cx ;
+		Cerchio[comp + 1].y = cy  + 2;
 		Cerchio[comp + 1].z = 0.0;
-		Cerchio[comp + 1].r = color_top.r; Cerchio[comp + 1].g = color_top.g; Cerchio[comp + 1].b = color_top.b; Cerchio[comp + 1].a = color_top.a;
+		Cerchio[comp + 1].r = color_bot.r; Cerchio[comp + 1].g = color_bot.g; Cerchio[comp + 1].b = color_bot.b; Cerchio[comp + 1].a = color_bot.a;
 
-		Cerchio[comp + 2].x = cx;
+		//terzo  vertice triangolo
+		Cerchio[comp + 2].x = cx+2;
 		Cerchio[comp + 2].y = cy;
 		Cerchio[comp + 2].z = 0.0;
 		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_bot.a;
 
 		comp += 3;
 	}
-}
-
-void Parte_superiore_navicella(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio) {
-	int i;
-	int comp = 0;
-	float A = PI / 4;
-	float B = 3 / 4 * PI;
-	// arco tra A e B dato da PI/2
-	float stepA = (PI / 2) / nTriangles;
-
-	for (i = 0; i < nTriangles; i++)
+	
+	for (int i = 0; i < 1; i++)
 	{
-		Cerchio[comp].x = cx + cos(A + (double)i * stepA) * raggiox;
-		Cerchio[comp].y = cy + sin(A + (double)i * stepA) * raggioy;
-		Cerchio[comp].z = 0;
-		Cerchio[comp].r = color_top.r; Cerchio[comp].g = color_top.g; Cerchio[comp].b = color_top.b; Cerchio[comp].a = color_top.a;
-		Cerchio[comp + 1].x = cx + cos(A + (double)(i + 1) * stepA) * raggiox;
-		Cerchio[comp + 1].y = cy + sin(A + (double)(i + 1) * stepA) * raggioy;
-		Cerchio[comp + 1].z = 0;
-		Cerchio[comp + 1].r = color_top.r; Cerchio[comp + 1].g = color_top.g; Cerchio[comp + 1].b = color_top.b; Cerchio[comp + 1].a = color_top.a;
-		Cerchio[comp + 2].x = cx;
-		Cerchio[comp + 2].y = cy;
+		//primo vertice triangolo
+		Cerchio[comp].x = cx+2;
+		Cerchio[comp].y = cy;
+		Cerchio[comp].z = 0.0;
+		Cerchio[comp].r = color_bot.r; Cerchio[comp].g = color_bot.g; Cerchio[comp].b = color_bot.b; Cerchio[comp].a = color_bot.a;
+
+		//secondo  vertice triangolo
+		Cerchio[comp + 1].x = cx;
+		Cerchio[comp + 1].y = cy+2;
+		Cerchio[comp + 1].z = 0.0;
+		Cerchio[comp + 1].r = color_bot.r; Cerchio[comp + 1].g = color_bot.g; Cerchio[comp + 1].b = color_bot.b; Cerchio[comp + 1].a = color_bot.a;
+
+		//terzo  vertice triangolo
+		Cerchio[comp + 2].x = cx+2;
+		Cerchio[comp + 2].y = cy+2;
 		Cerchio[comp + 2].z = 0.0;
-		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_bot.a;
+		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_top.a;
+
 		comp += 3;
 	}
-
-}
-
-
-void disegna_Navicella(vec4 color_top_Navicella, vec4 color_bot_Navicella, vec4 color_top_corpo, vec4 color_bot_corpo, vec4 color_top_Oblo, vec4 color_bot_Oblo, Point* Navicella)
-{
-	int cont, i, v_Oblo;
-	Point* Corpo;
-	int v_Corpo = 3 * nTriangles;
-	Corpo = new Point[v_Corpo];
-
-	Parte_superiore_navicella(0.0, -0.1, 1.0, 1.0, color_top_Navicella, color_bot_Navicella, Navicella);
-
-	//Costruisci Corpo   cerchio + cintura + 3 bottoni 
-	disegna_cerchio(0.0, -1.0, 1.0, 1.0, color_top_corpo, color_bot_corpo, Corpo);
-	cont = 3 * nTriangles;
-
-	for (i = 0; i < 3 * nTriangles; i++)
-	{
-		Navicella[i + cont].x = Corpo[i].x;
-		Navicella[i + cont].y = Corpo[i].y;
-		Navicella[i + cont].z = Corpo[i].z;
-		Navicella[i + cont].r = Corpo[i].r;	Navicella[i + cont].g = Corpo[i].g;	Navicella[i + cont].b = Corpo[i].b;	Navicella[i + cont].a = Corpo[i].a;
-	}
-	//Costruisci Corpo 2
-	disegna_cerchio(1.0, -1.0, 0.5, 0.5, color_top_Oblo, color_bot_Oblo, Corpo);
-	cont = 6 * nTriangles;
-	for (i = 0; i < 3 * nTriangles; i++)
-	{
-		Navicella[i + cont].x = Corpo[i].x;
-		Navicella[i + cont].y = Corpo[i].y;
-		Navicella[i + cont].z = Corpo[i].z;
-		Navicella[i + cont].r = Corpo[i].r;	Navicella[i + cont].g = Corpo[i].g;	Navicella[i + cont].b = Corpo[i].b;	Navicella[i + cont].a = Corpo[i].a;
-	}
-
-
-	//Costruisci Corpo 3
-	disegna_cerchio(-1.0, -1.0, 0.5, 0.5, color_top_Oblo, color_bot_Oblo, Corpo);
-
-	cont = 9 * nTriangles;
-	for (i = 0; i < 3 * nTriangles; i++)
-	{
-		Navicella[i + cont].x = Corpo[i].x;
-		Navicella[i + cont].y = Corpo[i].y;
-		Navicella[i + cont].z = Corpo[i].z;
-		Navicella[i + cont].r = Corpo[i].r;	Navicella[i + cont].g = Corpo[i].g;	Navicella[i + cont].b = Corpo[i].b;	Navicella[i + cont].a = Corpo[i].a;
-	}
-
-	cont = 12 * nTriangles;
-
-	//Proiettile
-	Navicella[cont].x = 0;
-	Navicella[cont].y = 0;
-	Navicella[cont].z = 0;
-	Navicella[cont].r = 1;
-	Navicella[cont].g = 1;
-	Navicella[cont].b = 1;
-	Navicella[cont].a = 1;
 }
 
 void disegna_nemico(vec4 color_top_Nemico, vec4 color_bot_Nemico, vec4 color_top_Occhio, vec4 color_bot_Occhio, Point* Nemico)
 {
-	int i, cont;
-	int v_faccia = 3 * nTriangles;
-	int nV_Tentacoli = 16;
-	Point* Occhio = new Point[v_faccia];
-	Point* Tentacoli = new Point[nV_Tentacoli];
+
 
 	// Disegna faccia del Nemico
 	disegna_cerchio(0.0, 0.0, 1.0, 1.0, color_top_Nemico, color_bot_Nemico, Nemico);
 
-	// Disegna i due occhi
+	/*// Disegna i due occhi
 	disegna_cerchio(-0.5, 0.5, 0.1, 0.1, color_top_Occhio, color_bot_Occhio, Occhio);
 	cont = 3 * nTriangles;
 	for (i = 0; i < v_faccia; i++)
@@ -684,6 +725,7 @@ void disegna_nemico(vec4 color_top_Nemico, vec4 color_bot_Nemico, vec4 color_top
 	disegna_tentacoli(Tentacoli, col_nero, col_rosso);
 	for (i = 0; i < nV_Tentacoli; i++)
 		Nemico[cont + i] = Tentacoli[i];
+		*/
 }
 
 
@@ -766,6 +808,28 @@ void init(void)
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
+	
+	//////////////////////////////////////////////////////////////
+	//disegno palla protiettile
+	vec4 color_top_corpo = { 1.0,1.0,1.0,1.0 };
+	vec4 color_bot_corpo = { 1.0,1.0,1.0,1.0 };
+	disegna_cerchio5(0.0, -1.0, raggioxPalla, raggioyPalla, color_bot_corpo, color_bot_corpo, PallaProiettile);
+	
+	glGenVertexArrays(1, &VAO_PALLA);
+	glBindVertexArray(VAO_PALLA);
+	glGenBuffers(1, &VBO_PALLA);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_PALLA);
+	glBufferData(GL_ARRAY_BUFFER, triangoliPalla*3 * sizeof(Point), &PallaProiettile[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	//Scollego il VAO
+	glBindVertexArray(0);
+	
+
+	//////////////////////////////////////////////////////////////
+
 	//Disegno NAVICELLA
 	vec4 color_top_Navicella = { 1.0,1.5,0.0,1.0 };
 	vec4 color_bot_Navicella = { 1.0,0.8,0.8,0.5 };
@@ -774,13 +838,14 @@ void init(void)
 	vec4 color_top_Oblo = { 0.2,0.9,0.1,1.0 };
 	vec4 color_bot_Oblo = { 0.0,0.2,0.8,1.0 };
 
-	disegna_Navicella(color_top_Navicella, color_bot_Navicella, color_top_Corpo, color_bot_Corpo, color_top_Oblo, color_bot_Oblo, Navicella);
+	disegna_rettangolo_giocatore(0.0, 0.0, 1.0, 1.0, color_top_Navicella, color_bot_Navicella, giocatoreRettangolare);
+
 	//Genero un VAO navicella
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, nVertices_Navicella * sizeof(Point), &Navicella[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 7 * sizeof(Point), &giocatoreRettangolare[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -789,8 +854,8 @@ void init(void)
 	glBindVertexArray(0);
 
 	//Disegna nemici
-	vec4 color_top_Nemico = { 1.0,0.0,1.0,1.0 };
-	vec4 color_top_Occhio = { 1.0,1.0,1.0,1.0 };
+	vec4 color_top_Nemico = { 1.0,1.0,1.0,0.3 };
+	vec4 color_top_Occhio = { 1.0,1.0,1.0,0.3 };
 	disegna_nemico(color_top_Nemico, col_bianco, color_top_Occhio, col_bianco, Nemico);
 	//Genero un VAO
 
@@ -799,8 +864,10 @@ void init(void)
 	glGenBuffers(1, &VBO_N);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_N);
 	glBufferData(GL_ARRAY_BUFFER, nVertices_Nemico * sizeof(Point), &Nemico[0], GL_STATIC_DRAW);
+	//per le posizioni xyz del vertice
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	//per i colori e trasparenza rgba
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	//Scollego il VAO
@@ -845,7 +912,11 @@ void drawScene(void)
 	glDrawArrays(GL_TRIANGLES, 0, vertices_cielo);
 	glBindVertexArray(0);
 
-	//Disegno il proiettile
+	
+
+	
+	
+	////////////////////////Disegno il proiettile puntiforme
 	glBindVertexArray(VAO);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glPointSize(8.0);
@@ -856,17 +927,50 @@ void drawScene(void)
 	else {
 		Model = translate(Model, vec3(posx + posx_Proiettile, posy + posy_Proiettile, 0));
 	}
-	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glDrawArrays(GL_POINTS, nVertices_Navicella - 1, 1);
 
-	//Disegno Navicella
+	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+	glDrawArrays(GL_POINTS,6, 1);
+	glBindVertexArray(0);
+	/////////////////////////////////////////
+	
+	///////////////////////////Disegno Navicella
+	glBindVertexArray(VAO);
 	Model = mat4(1.0);
 	Model = translate(Model, vec3(posx, posy, 0.0));
-	Model = scale(Model, vec3(80.0, 40.0, 1.0));
-	Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
+	//Model = scale(Model, vec3(80.0, 20.0, 1.0));
+	//Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
 	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
 	glDrawArrays(GL_TRIANGLES, 0, nVertices_Navicella - 1);
 	glBindVertexArray(0);
+	///////////////////////////////////////////////////////////
+
+	//////////////////////////DISEGNO PALLA PROIETTILE
+
+	glBindVertexArray(VAO_PALLA);
+
+	Model = mat4(1.0);
+	//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
+
+
+
+	if (sparoInVolo) {
+		Model = translate(Model, vec3(firePosition + posx_Proiettile,dimensionePalla+ posy + posy_Proiettile, 0));
+	}
+	else {
+		Model = translate(Model, vec3(posx + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
+	}
+	Model = scale(Model, vec3(dimensionePalla, dimensionePalla, 1.0));
+
+	glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// faccia e occhi
+	glDrawArrays(GL_TRIANGLES, 0, triangoliPalla * 3);
+
+	glBindVertexArray(0);
+	/////////////////////////
+
+
+
 
 	glUseProgram(programId_1); // attiva  fragment shader_1 solo per il nemico
 	glUniform1f(loc, t);
@@ -886,15 +990,15 @@ void drawScene(void)
 
 			Model = translate(Model, vec3(posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i), posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i), 0));
 			Model = scale(Model, vec3(30.0, 30.0, 1.0));
-			Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
+			//Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
 			glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
 			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			// faccia e occhi
-			glDrawArrays(GL_TRIANGLES, 0, nVertices_Nemico - nvBocca - nvTentacoli);
-			glLineWidth(3.0);  // bocca
-			glDrawArrays(GL_LINE_STRIP, nVertices_Nemico - nvBocca - nvTentacoli, nvBocca);
-			glLineWidth(8.0); // tentacoli
-			glDrawArrays(GL_LINES, nVertices_Nemico - nvTentacoli, nvTentacoli);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0,6);
+			//glLineWidth(3.0);  // bocca
+			//glDrawArrays(GL_LINE_STRIP, nVertices_Nemico - nvBocca - nvTentacoli, nvBocca);
+			//glLineWidth(8.0); // tentacoli
+			//glDrawArrays(GL_LINES, nVertices_Nemico - nvTentacoli, nvTentacoli);
 		}
 	}
 	/*
@@ -931,12 +1035,13 @@ void drawScene(void)
 		posizioneXavversario = (posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i));
 		posizioneYavversario = (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i));
 
+		int bound = 60;
 		if (
 			(
-				(firePosition + posx_Proiettile >= posizioneXavversario - 50)
-				&& (firePosition + posx_Proiettile <= posizioneXavversario + 50))
+				(firePosition + posx_Proiettile >= posizioneXavversario )
+				&& (firePosition + posx_Proiettile <= posizioneXavversario + bound))
 			&&
-			((posy + posy_Proiettile >= posizioneYavversario - 50) && (posy + posy_Proiettile <= posizioneYavversario + 50))
+			((posy + posy_Proiettile >= posizioneYavversario ) && (posy + posy_Proiettile <= posizioneYavversario + bound))
 			&&
 			!avversarioDisattivato.at(i)
 			)
@@ -963,13 +1068,13 @@ void drawScene(void)
 		posizioneYavversario = (posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i));
 
 		if (
-			posizioneXavversario >= posx - 50
+			posizioneXavversario >= posx
 			&&
-			posizioneXavversario <= posx + 50
+			posizioneXavversario <= posx + 60
 			&&
-			posizioneYavversario >= posy - 50
+			posizioneYavversario >= posy
 			&&
-			posizioneYavversario <= posy + 50
+			posizioneYavversario <= posy + 60
 			&&
 			!avversarioDisattivato.at(i)
 			)
@@ -987,9 +1092,9 @@ void drawScene(void)
 		}
 	}
 
-		//controllo vittoria
+	//controllo vittoria
 
-	if (counterColpiti == numeroNemici && checkSwapBuffer<1) {
+	if (counterColpiti == numeroNemici && checkSwapBuffer < 1) {
 		cout << "\nhai vinto: hai ucciso tutti gli avversari\n";
 		//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
 		//std::chrono::milliseconds timespan(3000);
@@ -1003,33 +1108,33 @@ void drawScene(void)
 	}
 
 
-		/*
-		// calcolo virus colpiti
-		for (int i = 0; i < numero_di_righe; i++)
+	/*
+	// calcolo virus colpiti
+	for (int i = 0; i < numero_di_righe; i++)
+	{
+		posyN = height - i * passo_righe - 20 + rand() % 20;
+		for (int j = 0; j < nemici_per_riga; j++)
 		{
-			posyN = height - i * passo_righe - 20 + rand() % 20;
-			for (int j = 0; j < nemici_per_riga; j++)
+			posxN = j * (passo_Nemici)+passo_Nemici / 2 + rand() % 40;
+			//	printf("Posizione del proiettile: x= %f y=%f \n", posx + posx_Proiettile, posy + posy_Proiettile);
+			//	printf("BB nemico %d %d : xmin= %f ymin=%f  xmax=%f ymax=%f \n", i,j, posxN - 50 , posyN-50, + posx_Proiettile, posy + posy_Proiettile);
+			if (((firePosition + posx_Proiettile >= posxN + dxnemici - 50) && (firePosition + posx_Proiettile <= posxN + dxnemici + 50)) && ((posy + posy_Proiettile >= posyN + dynemici - 50) && (posy + posy_Proiettile <= posyN + dynemici + 50)))
 			{
-				posxN = j * (passo_Nemici)+passo_Nemici / 2 + rand() % 40;
-				//	printf("Posizione del proiettile: x= %f y=%f \n", posx + posx_Proiettile, posy + posy_Proiettile);
-				//	printf("BB nemico %d %d : xmin= %f ymin=%f  xmax=%f ymax=%f \n", i,j, posxN - 50 , posyN-50, + posx_Proiettile, posy + posy_Proiettile);
-				if (((firePosition + posx_Proiettile >= posxN + dxnemici - 50) && (firePosition + posx_Proiettile <= posxN + dxnemici + 50)) && ((posy + posy_Proiettile >= posyN + dynemici - 50) && (posy + posy_Proiettile <= posyN + dynemici + 50)))
+				if (!colpito[i][j]) //se non era già stato colpito
 				{
-					if (!colpito[i][j]) //se non era già stato colpito
-					{
-						NumeroColpiti++;
-						printf("Numero colpiti %d \n", NumeroColpiti);
-						colpito[i][j] = true;
-					}
+					NumeroColpiti++;
+					printf("Numero colpiti %d \n", NumeroColpiti);
+					colpito[i][j] = true;
 				}
 			}
-		}*/
+		}
+	}*/
 
 
-		
 
-	
-	if (checkSwapBuffer<2)
+
+
+	if (checkSwapBuffer < 2)
 	{
 		glutSwapBuffers();
 	}
@@ -1053,7 +1158,7 @@ int main(int argc, char* argv[])
 	cin >> numeroNemici;
 	*/
 
-		
+
 	glutInit(&argc, argv);
 
 	glutInitContextVersion(4, 0);
@@ -1090,5 +1195,5 @@ int main(int argc, char* argv[])
 
 	glutMainLoop();
 
-	
+
 }
