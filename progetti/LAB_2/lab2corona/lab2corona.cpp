@@ -256,7 +256,7 @@ double v0Parabolic = 100;
 double counterParabolic = 0;
 double counterParabolicRight = 0;
 double x0Parabolic = larghezzaGiocatore / 2;
-double y0Parabolic = altezzaGiocatore+dimensionePalla;
+double y0Parabolic = altezzaGiocatore;
 
 int parabolicX(int v0, int t, double rad)
 {
@@ -295,7 +295,7 @@ void updateProiettile2r(int value)
 		cout << posy_Proiettile;
 		cout << "\n";
 		*/
-		posy_Proiettile = altezzaGiocatore+ dimensionePalla;
+		posy_Proiettile = altezzaGiocatore;
 		posx_Proiettile = larghezzaGiocatore/2;
 		counterParabolicRight = 0;
 		firePosition = posx;
@@ -335,7 +335,7 @@ void updateProiettile2(int value)
 		cout << posy_Proiettile;
 		cout << "\n";
 		*/
-		posy_Proiettile = altezzaGiocatore+ dimensionePalla;
+		posy_Proiettile = altezzaGiocatore;
 		posx_Proiettile = larghezzaGiocatore / 2;
 		counterParabolic = 0;
 		firePosition = posx;
