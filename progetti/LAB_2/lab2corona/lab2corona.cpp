@@ -6,6 +6,18 @@
 #include <chrono>
 #include <thread>
 
+bool attivaPS = false;
+int vitaPS = 0;
+int posxPS;
+int posyPS;
+
+string direzioneScia;
+int nPuntiScia = 20;
+int vitaScia = 0;
+
+float varOffsetSciaX;
+float varOffsetSciaY;
+
 float dimensionePalla = 30.0;
 int triangoliPalla = 9;
 float raggioxPalla = 0.6;
@@ -25,6 +37,19 @@ vector<int> posizioniXinizialiNemici = {};
 vector<int> posizioniYinizialiNemici = {};
 vector<bool> avversarioColpito = {};
 vector<bool> avversarioDisattivato = {};
+vector<float> fattoreDispersionePuntiScia = {};
+
+void offsetSciaX() {
+	if (direzioneScia == "left") {
+		varOffsetSciaX = dimensionePalla / 2;
+	}
+	else varOffsetSciaX = -dimensionePalla / 2;
+}
+
+void offsetSciaY() {
+	varOffsetSciaY = -dimensionePalla / 2;
+}
+
 
 int rangeRandomAlg2(int min, int max) {
 	int n = max - min + 1;
@@ -36,13 +61,26 @@ int rangeRandomAlg2(int min, int max) {
 	return min + x % n;
 }
 
-int numeroNemici = 200;
+int rangeRandomAlgNuovo(int min, int max) {
+	int n = max - min + 1;
+	int remainder = RAND_MAX % n;
+	int x;
+	do {
+		x = rand();
+	} while (x >= RAND_MAX - remainder);
+	if((min + x % n)<=min/2)
+		return -min + x % n;
+	return min + x % n;
+}
+
+
+int numeroNemici = 5;
 
 static unsigned int programId, programId_1;
 #define PI 3.14159265358979323846
 
-unsigned int VAO, VAO_CIELO, VAO_NEMICO,VAO_PALLA;
-unsigned int VBO, VBO_C, VBO_N, loc, MatProj, MatModel, MatProj1, MatModel1,VBO_PALLA;
+unsigned int VAO, VAO_CIELO, VAO_NEMICO, VAO_PALLA, VAO_SCIA;
+unsigned int VBO, VBO_C, VBO_N, loc, MatProj, MatModel, MatProj1, MatModel1, VBO_PALLA,VBO_SCIA;
 
 // Include GLM; libreria matematica per le opengl
 #include <glm/glm.hpp>
@@ -81,6 +119,8 @@ Point* Navicella = new Point[7];
 Point* Nemico = new Point[nVertices_Nemico];
 Point* giocatoreRettangolare = new Point[7];
 Point* PallaProiettile = new Point[nVertices_PallaProiettile];
+
+Point* puntiScia = new Point[nPuntiScia];
 int vertices_cielo = 6;
 Point* Cielo = new Point[vertices_cielo];
 
@@ -140,6 +180,20 @@ vector<int> sfasamentoYnemici;
 
 vector<int> direzioneXnemici;
 vector<int> direzioneYnemici;
+
+void initScia(Point* puntiScia) {
+
+	for (int i = 0; i < nPuntiScia; i++) {
+
+		puntiScia[i].x = 0;
+		puntiScia[i].y = 0;
+		puntiScia[i].z = 0;
+		puntiScia[i].r = 0;
+		puntiScia[i].g = 0;
+		puntiScia[i].b = 0;
+		puntiScia[i].a = 0;
+	}
+}
 
 void disegna_cerchio5(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio)
 {
@@ -302,6 +356,8 @@ void updateProiettile2r(int value)
 		firePosition = posx;
 		sparoInVolo = false;
 		proiettileColpitoAvversario = false;
+		vitaScia = 0;
+		initScia(puntiScia);
 	}
 
 
@@ -342,6 +398,8 @@ void updateProiettile2(int value)
 		firePosition = posx;
 		sparoInVolo = false;
 		proiettileColpitoAvversario = false;
+		vitaScia = 0;
+		initScia(puntiScia);
 	}
 
 
@@ -447,6 +505,9 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 			updateProiettile2r(0);
 			firePosition = posx;
 			sparoInVolo = true;
+			direzioneScia = "left";
+			offsetSciaX();
+			offsetSciaY();
 		}
 		break;
 	case 'e':
@@ -455,6 +516,9 @@ void keyboardPressedEvent(unsigned char key, int x, int y)
 			updateProiettile2(0);
 			firePosition = posx;
 			sparoInVolo = true;
+			direzioneScia = "right";
+			offsetSciaX();
+			offsetSciaY();
 		}
 		break;
 	case 'a':
@@ -531,7 +595,10 @@ void keyboardReleasedEvent(unsigned char key, int x, int y)
 	}
 }
 
+
+
 /// /////////////////////////////////// Disegna geometria //////////////////////////////////////
+
 
 void disegna_tentacoli(Point* Punti, vec4 color_top, vec4 color_bot)
 {
@@ -755,6 +822,8 @@ void initShader(void)
 
 void init(void)
 {
+	initScia(puntiScia);
+
 	for (int i = 0; i < numeroNemici; i++) {
 		avversarioColpito.push_back(false);
 	}
@@ -781,6 +850,11 @@ void init(void)
 	for (int i = 0; i < numeroNemici; i++) {
 		avversarioDisattivato.push_back(false);
 	}
+
+	for (int i = 0; i < nPuntiScia; i++) {
+		int rand = rangeRandomAlg2(7, 100) / 100;
+		fattoreDispersionePuntiScia.push_back(rand);
+	}
 	/*
 	for (int i = 0; i < numeroNemici; i++) {
 		cout << posizioniX.at(i);
@@ -788,6 +862,20 @@ void init(void)
 		cout << posizioniY.at(i);
 		cout << "\n";
 	}*/
+
+	//////INIZIALIZZAZIONE SCIA PS//////////////////////////////////////
+
+	glGenVertexArrays(1, &VAO_SCIA);
+	glBindVertexArray(VAO_SCIA);
+	glGenBuffers(1, &VBO_SCIA);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_SCIA);
+	glBufferData(GL_ARRAY_BUFFER, nPuntiScia * sizeof(Point), &puntiScia[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glBindVertexArray(0);
+	////////////////////////////////////////////
 
 
 	vector<int> timeInstant{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -900,6 +988,54 @@ void init(void)
 bool firstDrawVirus = false;
 
 
+
+void updatePuntiScia(Point* puntiScia) {
+	vitaScia++;
+	cout << vitaScia;
+	cout << "\n";
+	int offsetDaPalla =20;
+
+	for (int i = 0; i < nPuntiScia; i++) {
+		int randX = rangeRandomAlg2(5, 100);
+		if (direzioneScia == "right") {
+			randX = -randX;
+		}
+		puntiScia[i].x = offsetDaPalla + firePosition + posx_Proiettile + varOffsetSciaX+ randX*fattoreDispersionePuntiScia.at(i);
+		puntiScia[i].y = offsetDaPalla + posy + posy_Proiettile + varOffsetSciaY - rangeRandomAlg2(5, 100) * fattoreDispersionePuntiScia.at(i);
+		puntiScia[i].z = 0.0;
+		puntiScia[i].r = 1.0;
+		puntiScia[i].g =0;
+		puntiScia[i].b =0;
+
+		puntiScia[i].a = 1.0;
+	}
+}
+
+void updatePS(Point* puntiScia,int px,int py) {
+	int dispersionex = rangeRandomAlg2(10, 40);
+	for (int i = 0; i < nPuntiScia; i++) {
+		if (direzioneScia == "left") {
+			puntiScia[i].x = px + rangeRandomAlgNuovo(10, 50)- rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
+			puntiScia[i].y = py + rangeRandomAlgNuovo(10, 50) + dimensioneNemici + rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
+
+		}
+		else {
+			puntiScia[i].x = px + rangeRandomAlgNuovo(10, 50) + dimensioneNemici + rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
+
+			puntiScia[i].y = py + rangeRandomAlgNuovo(10, 50) + dimensioneNemici + rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
+
+		}
+
+		puntiScia[i].z = 0.0;
+		puntiScia[i].r = 1.0;
+		puntiScia[i].g = 0;
+		puntiScia[i].b = 0;
+		puntiScia[i].a = 1.0;
+	}
+}
+
+
+
 void drawScene(void)
 {
 	glUniformMatrix4fv(MatProj, 1, GL_FALSE, value_ptr(Projection));
@@ -915,25 +1051,70 @@ void drawScene(void)
 	glDrawArrays(GL_TRIANGLES, 0, vertices_cielo);
 	glBindVertexArray(0);
 
-	
 
+
+	/*
+	for (int i = 0; i < nPuntiScia; i++) {
+		cout << puntiScia[i].x;
+		cout << " | ";
+		cout << puntiScia[i].y;
+		cout << " | ";
+		cout << puntiScia[i].z;
+		cout << " | ";
+		cout << puntiScia[i].r;
+		cout << " | ";
+		cout << puntiScia[i].g;
+		cout << " | ";
+		cout << puntiScia[i].b;
+		cout << " | ";
+		cout << puntiScia[i].a;
+		cout << "\n";
+	}
+	*/
+	if (false) {
+		updatePuntiScia(puntiScia);
+
+		///////////////////disegna scia
+
+
+		glBindVertexArray(VAO_SCIA);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_SCIA);
+		glBufferData(GL_ARRAY_BUFFER, nPuntiScia * sizeof(Point), &puntiScia[0], GL_STATIC_DRAW);
+		// Configura l'attributo posizione
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		// Configura l'attributo colore
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+		glPointSize(7.0);
+		Model = mat4(1.0);
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glDrawArrays(GL_POINTS, 0, nPuntiScia);
+		glBindVertexArray(0);
+
+
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	
 	
 	////////////////////////Disegno il proiettile puntiforme
-	glBindVertexArray(VAO);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	/*
+	glBindVertexArray(VAO_SCIA);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glPointSize(8.0);
 	Model = mat4(1.0);
-	if (sparoInVolo) {
-		Model = translate(Model, vec3(firePosition + posx_Proiettile, posy + posy_Proiettile, 0));
+	/*if (sparoInVolo) {
+		Model = translate(Model, vec3(firePosition + posx_Proiettile+ varOffsetSciaX, posy + posy_Proiettile+ varOffsetSciaY, 0));
 	}
 	else {
 		Model = translate(Model, vec3(posx + posx_Proiettile, posy + posy_Proiettile, 0));
 	}
-
 	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glDrawArrays(GL_POINTS,6, 1);
+	glDrawArrays(GL_POINTS,0, nPuntiScia);
 	glBindVertexArray(0);
+
+	*/
 	/////////////////////////////////////////
 	
 	///////////////////////////Disegno Navicella
@@ -945,7 +1126,7 @@ void drawScene(void)
 	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
 	glDrawArrays(GL_TRIANGLES, 0, nVertices_Navicella - 1);
 	glBindVertexArray(0);
-	///////////////////////////////////////////////////////////
+	////////////////////////DISEGNO SCIA///////////////////////////////////
 
 	//////////////////////////DISEGNO PALLA PROIETTILE
 
@@ -1031,6 +1212,8 @@ void drawScene(void)
 	}*/
 	glBindVertexArray(0);
 
+
+
 	//controllo se avversario è stato colpito da proiettile
 	for (int i = 0; i < numeroNemici; i++) {
 		int posizioneXavversario;
@@ -1057,9 +1240,41 @@ void drawScene(void)
 				printf("\ncolpito avversario: %d\n", i);
 
 				printf("Avversari colpiti %d/%d\n", counterColpiti, numeroNemici);
+
+				//disegno sistema particellare colpimento avversario
+				attivaPS = true;
+				posxPS = posizioneXavversario;
+				posyPS = posizioneYavversario;
+				vitaPS = 0;
 			}
 		}
 	}
+
+	if (vitaPS > 200) {
+		attivaPS = false;
+	}
+	if (attivaPS ) {
+		//cout << "weeeeeeeeeeeeeeeeeeee";
+		vitaPS++;
+		updatePS(puntiScia,posxPS,posyPS);
+		glBindVertexArray(VAO_SCIA);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_SCIA);
+		glBufferData(GL_ARRAY_BUFFER, nPuntiScia * sizeof(Point), &puntiScia[0], GL_STATIC_DRAW);
+		// Configura l'attributo posizione
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		// Configura l'attributo colore
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+		glPointSize(7.0);
+		Model = mat4(1.0);
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glDrawArrays(GL_POINTS, 0, nPuntiScia);
+		glBindVertexArray(0);
+
+	}
+
+
 
 	bool makeSwapBuffer = true;
 

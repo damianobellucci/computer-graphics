@@ -26,7 +26,8 @@ Cosa ho fatto fino ad ora:
 -aggiustamento bound colpimento avversari in base alle nuove geometrie
 -rifatti i bound per il caso in cui il giocatore è colpito
 -rifatto il rimbalzo contro il muro di destra secondo la nuova geometria del giocatore
-
+-implementato particle system in cui l'avversario quando viene colpito si lascia dietro una scia che si espande a raggiera secondo moto rettilineo uniformemente accelerato,
+inoltre le direzioni di espansione della raggiera di punti sono coerenti con la direzione di arrivo del proiettile
 -------------------------------------------------------------
 Cose da fare:
 -colore del proiettile bianco si confonde con il bianco del quadrato avversario, da aggiustare
@@ -37,5 +38,3 @@ Cose da fare:
 
 -----
 Corrente:
--fare sistema particellare come scia della palla
-
