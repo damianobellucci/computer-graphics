@@ -68,7 +68,7 @@ int rangeRandomAlgNuovo(int min, int max) {
 	do {
 		x = rand();
 	} while (x >= RAND_MAX - remainder);
-	if((min + x % n)<=min/2)
+	if ((min + x % n) <= min / 2)
 		return -min + x % n;
 	return min + x % n;
 }
@@ -80,7 +80,7 @@ static unsigned int programId, programId_1;
 #define PI 3.14159265358979323846
 
 unsigned int VAO, VAO_CIELO, VAO_NEMICO, VAO_PALLA, VAO_SCIA;
-unsigned int VBO, VBO_C, VBO_N, loc, MatProj, MatModel, MatProj1, MatModel1, VBO_PALLA,VBO_SCIA;
+unsigned int VBO, VBO_C, VBO_N, loc, MatProj, MatModel, MatProj1, MatModel1, VBO_PALLA, VBO_SCIA;
 
 // Include GLM; libreria matematica per le opengl
 #include <glm/glm.hpp>
@@ -132,13 +132,13 @@ int height = 720;
 float t;
 
 //posizione relativa del proiettile rispetto alla navicella
-float posx_Proiettile = larghezzaGiocatore/2, posy_Proiettile = altezzaGiocatore;
+float posx_Proiettile = larghezzaGiocatore / 2, posy_Proiettile = altezzaGiocatore;
 
 //ANIMARE V
 double VelocitaOrizzontale = 0; //velocita orizzontale (pixel per frame)
 int scuoti = 0;
 double accelerazione = 1; // forza di accelerazione data dalla tastiera
-float posx = width / 2-larghezzaGiocatore/2; //coordinate sul piano della posizione iniziale della navicella
+float posx = width / 2 - larghezzaGiocatore / 2; //coordinate sul piano della posizione iniziale della navicella
 float posy = height * 0.225;
 float posizione_di_equilibrio = posy;
 float angolo = 0;
@@ -239,7 +239,7 @@ void updateNemici(int value)
 
 		for (int i = 0; i < numeroNemici; i++) {
 			if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)) + bound > width - distaccoDaParete || (posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i) <= distaccoDaParete)) {
-				if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i))+ bound > width - distaccoDaParete)
+				if ((posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i)) + bound > width - distaccoDaParete)
 				{
 					direzioneXnemici.at(i) = direzioneXnemici.at(i) - entitaRimbalzo;
 				}
@@ -329,9 +329,9 @@ void updateProiettile2r(int value)
 {
 	counterParabolicRight++;
 	//Ascissa del proiettile durante lo sparo
-	posx_Proiettile = x0Parabolic -parabolicX(v0Parabolic, counterParabolicRight / 15, radParabolic);
+	posx_Proiettile = x0Parabolic - parabolicX(v0Parabolic, counterParabolicRight / 15, radParabolic);
 	//Ordinata del proettile durante lo sparo
-	posy_Proiettile = y0Parabolic+ parabolicY(v0Parabolic, counterParabolicRight / 15, radParabolic, gravityParabolic);
+	posy_Proiettile = y0Parabolic + parabolicY(v0Parabolic, counterParabolicRight / 15, radParabolic, gravityParabolic);
 
 	/*
 	cout << firePosition;
@@ -353,7 +353,7 @@ void updateProiettile2r(int value)
 		cout << "\n";
 		*/
 		posy_Proiettile = altezzaGiocatore;
-		posx_Proiettile = larghezzaGiocatore/2;
+		posx_Proiettile = larghezzaGiocatore / 2;
 		counterParabolicRight = 0;
 		firePosition = posx;
 		sparoInVolo = false;
@@ -370,9 +370,9 @@ void updateProiettile2(int value)
 {
 	counterParabolic++;
 	//Ascissa del proiettile durante lo sparo
-	posx_Proiettile = x0Parabolic +parabolicX(v0Parabolic, counterParabolic / 15, radParabolic);
+	posx_Proiettile = x0Parabolic + parabolicX(v0Parabolic, counterParabolic / 15, radParabolic);
 	//Ordinata del proettile durante lo sparo
-	posy_Proiettile = y0Parabolic+ parabolicY(v0Parabolic, counterParabolic / 15, radParabolic, gravityParabolic);
+	posy_Proiettile = y0Parabolic + parabolicY(v0Parabolic, counterParabolic / 15, radParabolic, gravityParabolic);
 
 	/*
 	cout << firePosition;
@@ -485,8 +485,8 @@ void updateV(int a)
 		posx = 0;
 		VelocitaOrizzontale = -VelocitaOrizzontale * 0.8;
 	}
-	if (posx+larghezzaGiocatore > width) {
-		posx = width- larghezzaGiocatore;
+	if (posx + larghezzaGiocatore > width) {
+		posx = width - larghezzaGiocatore;
 		VelocitaOrizzontale = -VelocitaOrizzontale * 0.8;
 	}
 	// calcolo y come somma dei seguenti contributi: pos. di equilibrio, oscillazione periodica
@@ -657,8 +657,8 @@ void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggi
 		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_bot.a;
 
 		//secondo  vertice triangolo
-		GiocatoreRettangolare[comp + 1].x = cx+ dimensioni_rettangolox;
-		GiocatoreRettangolare[comp + 1].y = cy ;
+		GiocatoreRettangolare[comp + 1].x = cx + dimensioni_rettangolox;
+		GiocatoreRettangolare[comp + 1].y = cy;
 		GiocatoreRettangolare[comp + 1].z = 0.0;
 		GiocatoreRettangolare[comp + 1].r = color_top.r; GiocatoreRettangolare[comp + 1].g = color_top.g; GiocatoreRettangolare[comp + 1].b = color_top.b; GiocatoreRettangolare[comp + 1].a = color_top.a;
 
@@ -676,12 +676,12 @@ void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggi
 	{
 		//primo vertice triangolo
 		GiocatoreRettangolare[comp].x = cx + dimensioni_rettangolox;
-		GiocatoreRettangolare[comp].y = cy+ dimensioni_rettangoloy;
+		GiocatoreRettangolare[comp].y = cy + dimensioni_rettangoloy;
 		GiocatoreRettangolare[comp].z = 0.0;
 		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_bot.a;
 
 		//secondo  vertice triangolo
-		GiocatoreRettangolare[comp + 1].x = cx+ dimensioni_rettangolox;
+		GiocatoreRettangolare[comp + 1].x = cx + dimensioni_rettangolox;
 		GiocatoreRettangolare[comp + 1].y = cy;
 		GiocatoreRettangolare[comp + 1].z = 0.0;
 		GiocatoreRettangolare[comp + 1].r = color_top.r; GiocatoreRettangolare[comp + 1].g = color_top.g; GiocatoreRettangolare[comp + 1].b = color_top.b; GiocatoreRettangolare[comp + 1].a = color_top.a;
@@ -715,43 +715,43 @@ void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 colo
 	for (int i = 0; i < 1; i++)
 	{
 		//primo vertice triangolo
-		Cerchio[comp].x = cx  ;
-		Cerchio[comp].y = cy ;
+		Cerchio[comp].x = cx;
+		Cerchio[comp].y = cy;
 		Cerchio[comp].z = 0.0;
 		Cerchio[comp].r = color_top.r; Cerchio[comp].g = color_top.g; Cerchio[comp].b = color_top.b; Cerchio[comp].a = color_top.a;
 
 		//secondo  vertice triangolo
-		Cerchio[comp + 1].x = cx ;
-		Cerchio[comp + 1].y = cy  + 2;
+		Cerchio[comp + 1].x = cx;
+		Cerchio[comp + 1].y = cy + 2;
 		Cerchio[comp + 1].z = 0.0;
 		Cerchio[comp + 1].r = color_bot.r; Cerchio[comp + 1].g = color_bot.g; Cerchio[comp + 1].b = color_bot.b; Cerchio[comp + 1].a = color_bot.a;
 
 		//terzo  vertice triangolo
-		Cerchio[comp + 2].x = cx+2;
+		Cerchio[comp + 2].x = cx + 2;
 		Cerchio[comp + 2].y = cy;
 		Cerchio[comp + 2].z = 0.0;
 		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_bot.a;
 
 		comp += 3;
 	}
-	
+
 	for (int i = 0; i < 1; i++)
 	{
 		//primo vertice triangolo
-		Cerchio[comp].x = cx+2;
+		Cerchio[comp].x = cx + 2;
 		Cerchio[comp].y = cy;
 		Cerchio[comp].z = 0.0;
 		Cerchio[comp].r = color_bot.r; Cerchio[comp].g = color_bot.g; Cerchio[comp].b = color_bot.b; Cerchio[comp].a = color_bot.a;
 
 		//secondo  vertice triangolo
 		Cerchio[comp + 1].x = cx;
-		Cerchio[comp + 1].y = cy+2;
+		Cerchio[comp + 1].y = cy + 2;
 		Cerchio[comp + 1].z = 0.0;
 		Cerchio[comp + 1].r = color_bot.r; Cerchio[comp + 1].g = color_bot.g; Cerchio[comp + 1].b = color_bot.b; Cerchio[comp + 1].a = color_bot.a;
 
 		//terzo  vertice triangolo
-		Cerchio[comp + 2].x = cx+2;
-		Cerchio[comp + 2].y = cy+2;
+		Cerchio[comp + 2].x = cx + 2;
+		Cerchio[comp + 2].y = cy + 2;
 		Cerchio[comp + 2].z = 0.0;
 		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_top.a;
 
@@ -884,7 +884,7 @@ void init(void)
 	vector<int> timeInstant{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 
 	//Disegno SPAZIO/CIELO
-	vec4 col_top ={0.0,0.0,1,1 };
+	vec4 col_top = { 0.0,0.0,1,1 };
 	vec4 col_bot = { 1,1,1,1 };
 
 	disegna_piano(0.0, 0.0, 1.0, 1.0, col_bot, col_top, Cielo);
@@ -904,25 +904,25 @@ void init(void)
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
-	
+
 	//////////////////////////////////////////////////////////////
 	//disegno palla protiettile
 	vec4 color_top_corpo = { 1.0,0.0,0,1 };
 	vec4 color_bot_corpo = { 1.0,1.0,1.0,1.0 };
 	disegna_cerchio5(0.0, -1.0, raggioxPalla, raggioyPalla, color_top_corpo, color_bot_corpo, PallaProiettile);
-	
+
 	glGenVertexArrays(1, &VAO_PALLA);
 	glBindVertexArray(VAO_PALLA);
 	glGenBuffers(1, &VBO_PALLA);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_PALLA);
-	glBufferData(GL_ARRAY_BUFFER, triangoliPalla*3 * sizeof(Point), &PallaProiettile[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, triangoliPalla * 3 * sizeof(Point), &PallaProiettile[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	//Scollego il VAO
 	glBindVertexArray(0);
-	
+
 
 	//////////////////////////////////////////////////////////////
 
@@ -998,29 +998,29 @@ void updatePuntiScia(Point* puntiScia) {
 	vitaScia++;
 	cout << vitaScia;
 	cout << "\n";
-	int offsetDaPalla =20;
+	int offsetDaPalla = 20;
 
 	for (int i = 0; i < nPuntiScia; i++) {
 		int randX = rangeRandomAlg2(5, 100);
 		if (direzioneScia == "right") {
 			randX = -randX;
 		}
-		puntiScia[i].x = offsetDaPalla + firePosition + posx_Proiettile + varOffsetSciaX+ randX*fattoreDispersionePuntiScia.at(i);
+		puntiScia[i].x = offsetDaPalla + firePosition + posx_Proiettile + varOffsetSciaX + randX * fattoreDispersionePuntiScia.at(i);
 		puntiScia[i].y = offsetDaPalla + posy + posy_Proiettile + varOffsetSciaY - rangeRandomAlg2(5, 100) * fattoreDispersionePuntiScia.at(i);
 		puntiScia[i].z = 0.0;
 		puntiScia[i].r = 1.0;
-		puntiScia[i].g =0;
-		puntiScia[i].b =0;
+		puntiScia[i].g = 0;
+		puntiScia[i].b = 0;
 
 		puntiScia[i].a = 1.0;
 	}
 }
 
-void updatePS(Point* puntiScia,int px,int py) {
+void updatePS(Point* puntiScia, int px, int py) {
 	int dispersionex = rangeRandomAlg2(10, 40);
 	for (int i = 0; i < nPuntiScia; i++) {
 		if (direzioneScia == "left") {
-			puntiScia[i].x = px + rangeRandomAlgNuovo(10, 50)- rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
+			puntiScia[i].x = px + rangeRandomAlgNuovo(10, 50) - rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
 			puntiScia[i].y = py + rangeRandomAlgNuovo(10, 50) + dimensioneNemici + rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
 
 		}
@@ -1101,8 +1101,8 @@ void drawScene(void)
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	
-	
+
+
 	////////////////////////Disegno il proiettile puntiforme
 	/*
 	glBindVertexArray(VAO_SCIA);
@@ -1121,7 +1121,7 @@ void drawScene(void)
 
 	*/
 	/////////////////////////////////////////
-	
+
 	///////////////////////////Disegno Navicella
 	glBindVertexArray(VAO);
 	Model = mat4(1.0);
@@ -1143,7 +1143,7 @@ void drawScene(void)
 
 
 	if (sparoInVolo) {
-		Model = translate(Model, vec3(firePosition + posx_Proiettile,dimensionePalla+ posy + posy_Proiettile, 0));
+		Model = translate(Model, vec3(firePosition + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
 	}
 	else {
 		Model = translate(Model, vec3(posx + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
@@ -1181,7 +1181,7 @@ void drawScene(void)
 			glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
 			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			// faccia e occhi
-			glDrawArrays(GL_TRIANGLE_STRIP, 0,6);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 			//glLineWidth(3.0);  // bocca
 			//glDrawArrays(GL_LINE_STRIP, nVertices_Nemico - nvBocca - nvTentacoli, nvBocca);
 			//glLineWidth(8.0); // tentacoli
@@ -1227,10 +1227,10 @@ void drawScene(void)
 		int bound = 60;
 		if (
 			(
-				(firePosition + posx_Proiettile+dimensionePalla/2 >= posizioneXavversario )
-				&& (firePosition + posx_Proiettile- dimensionePalla / 2 <= posizioneXavversario + bound))
+				(firePosition + posx_Proiettile + dimensionePalla / 2 >= posizioneXavversario)
+				&& (firePosition + posx_Proiettile - dimensionePalla / 2 <= posizioneXavversario + bound))
 			&&
-			((posy + posy_Proiettile+ dimensionePalla / 2 >= posizioneYavversario ) && (posy + posy_Proiettile- dimensionePalla / 2 <= posizioneYavversario + bound))
+			((posy + posy_Proiettile + dimensionePalla / 2 >= posizioneYavversario) && (posy + posy_Proiettile - dimensionePalla / 2 <= posizioneYavversario + bound))
 			&&
 			!avversarioDisattivato.at(i)
 			)
@@ -1256,10 +1256,10 @@ void drawScene(void)
 	if (vitaPS > 200) {
 		attivaPS = false;
 	}
-	if (attivaPS ) {
+	if (attivaPS) {
 		//cout << "weeeeeeeeeeeeeeeeeeee";
 		vitaPS++;
-		updatePS(puntiScia,posxPS,posyPS);
+		updatePS(puntiScia, posxPS, posyPS);
 		glBindVertexArray(VAO_SCIA);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO_SCIA);
 		glBufferData(GL_ARRAY_BUFFER, nPuntiScia * sizeof(Point), &puntiScia[0], GL_STATIC_DRAW);
@@ -1294,10 +1294,10 @@ void drawScene(void)
 				&&
 				posizioneXavversario <= posx + larghezzaGiocatore
 				&&
-				posizioneYavversario   <= posy + altezzaGiocatore
+				posizioneYavversario <= posy + altezzaGiocatore
 				&&
-				posizioneYavversario+ dimensioneNemici>=posy
-			)
+				posizioneYavversario + dimensioneNemici >= posy
+				)
 			&&
 			!avversarioDisattivato.at(i)
 			)
@@ -1372,14 +1372,34 @@ void drawScene(void)
 	}
 }
 
+int sanitycheck() {
+	int num = 0;
+	bool failed = false;
+	do {
+		failed = false;
+		cout << "Scelta numero nemici: ";
+		cin >> num;
+		if (cin.fail() || num <1) {
+			cin.clear();
+			cin.ignore(1000, '\n');
+			cout << "L'input deve essere un numero maggiore di zero!" << endl;
+			failed = true;
+		}
+	} while (failed);
+	return num;
+}
+
 
 int main(int argc, char* argv[])
 {
 	//scelta da terminale del numero di nemici
-	/*
-	cout << "Numero nemici: ";
-	cin >> numeroNemici;
-	*/
+
+
+
+	numeroNemici= sanitycheck();
+
+
+	
 
 
 	glutInit(&argc, argv);
