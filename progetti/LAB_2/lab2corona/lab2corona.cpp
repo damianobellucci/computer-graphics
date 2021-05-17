@@ -16,7 +16,7 @@ int posxPS;
 int posyPS;
 
 string direzioneScia;
-int nPuntiScia = 20;
+int nPuntiScia = 30;
 int vitaScia = 0;
 
 float varOffsetSciaX;
@@ -1058,7 +1058,8 @@ int motoUniformementeAccelerato(int s_iniziale, int v_iniziale,int vitaPS, int a
 }
 
 
-void updatePS2(int v) {
+
+void updatePS2beforeFix(int v) {
 	float v0 = 1;
 	float a = 0.1;
 	float tempo = vitaPS/1.9;
@@ -1107,7 +1108,71 @@ void updatePS2(int v) {
 	if (vitaPS < 20) {
 		vitaPS++;
 		glutPostRedisplay();
-		glutTimerFunc(10, updatePS2, 0);
+		glutTimerFunc(20, updatePS2beforeFix, 0);
+	}
+	else {
+		attivaPS = false;
+		vitaPS = 0;
+	}
+
+}
+
+
+void updatePS2(int v) {
+	float v0 = 0.5;
+	float a = 0.5;
+	float tempo = vitaPS ;
+
+	if (vitaPS == 0) {
+		for (int i = 0; i < nPuntiScia; i++) {
+			posXPrecedentePuntiPS.at(i) =  rangeRandomAlgNuovo(10, 100);
+			posYPrecedentePuntiPS.at(i) =  rangeRandomAlgNuovo(10, 100);
+
+		}
+	}
+
+	for (int i = 0; i < nPuntiScia; i++) {
+		if (direzioneScia == "left") {
+
+			puntiScia[i].x = posXPrecedentePuntiPS.at(i) - v0 * tempo - 1 / 2 * a * tempo * tempo;
+			puntiScia[i].y = posYPrecedentePuntiPS.at(i) + v0 * tempo + 1 / 2 * a * tempo * tempo;
+			//puntiScia[i].x = posXPrecedentePuntiPS.at(i) - fattoreVelocitaParticellaPS.at(i)/vitaPS;
+			//puntiScia[i].y = posYPrecedentePuntiPS.at(i) + fattoreVelocitaParticellaPS.at(i);
+			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
+			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
+			puntiScia[i].x = puntiScia[i].x + posxPS;
+			puntiScia[i].y = puntiScia[i].y + posyPS;
+
+			/*
+			puntiScia[i].x = posXPrecedentePuntiPS.at(i) - 4 * vitaPS / 30;
+			puntiScia[i].y =posYPrecedentePuntiPS.at(i) + dimensioneNemici + 4  * vitaPS / 30;
+			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
+			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
+			*/
+		}
+		else {
+			puntiScia[i].x = posXPrecedentePuntiPS.at(i) + v0 * tempo + 1 / 2 * a * tempo * tempo;
+			puntiScia[i].y = posYPrecedentePuntiPS.at(i) + v0 * tempo + 1 / 2 * a * tempo * tempo;
+			//puntiScia[i].x = posXPrecedentePuntiPS.at(i) - fattoreVelocitaParticellaPS.at(i)/vitaPS;
+			//puntiScia[i].y = posYPrecedentePuntiPS.at(i) + fattoreVelocitaParticellaPS.at(i);
+			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
+			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
+			puntiScia[i].x = puntiScia[i].x + posxPS;
+			puntiScia[i].y = puntiScia[i].y + posyPS;
+		}
+
+		puntiScia[i].z = 0.0;
+		puntiScia[i].r = 1.0;
+		puntiScia[i].g = 0;
+		puntiScia[i].b = 0;
+		puntiScia[i].a = 1;
+	}
+
+
+	if (vitaPS < 20) {
+		vitaPS++;
+		glutPostRedisplay();
+		glutTimerFunc(20, updatePS2, 0);
 	}
 	else {
 		attivaPS = false;
