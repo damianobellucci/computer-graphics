@@ -6,6 +6,10 @@
 #include <chrono>
 #include <thread>
 
+vector<int> posXPrecedentePuntiPS = {};
+vector<int> posYPrecedentePuntiPS = {};
+vector<int> fattoreVelocitaParticellaPS = {};
+
 bool attivaPS = false;
 int vitaPS = 0;
 int posxPS;
@@ -825,7 +829,17 @@ void initShader(void)
 
 void init(void)
 {
-	initScia(puntiScia);
+
+
+	for (int i = 0; i < nPuntiScia; i++) {
+		fattoreVelocitaParticellaPS.push_back(0);
+	}
+
+
+	for (int i = 0; i < nPuntiScia; i++) {
+		posXPrecedentePuntiPS.push_back(0);
+		posYPrecedentePuntiPS.push_back(0);
+	}
 
 	for (int i = 0; i < numeroNemici; i++) {
 		avversarioColpito.push_back(false);
@@ -1039,6 +1053,68 @@ void updatePS(Point* puntiScia, int px, int py) {
 	}
 }
 
+int motoUniformementeAccelerato(int s_iniziale, int v_iniziale,int vitaPS, int a) {
+	return 1/2 * a*1*1+v_iniziale*vitaPS+s_iniziale;
+}
+
+
+void updatePS2(int v) {
+	float v0 = 0.003;
+	float a = 10;
+	int tempo = vitaPS;
+
+	if (vitaPS == 0) {
+		for (int i = 0; i < nPuntiScia; i++) {
+			posXPrecedentePuntiPS.at(i)=(posxPS + rangeRandomAlgNuovo(10, 75));
+			posYPrecedentePuntiPS.at(i)=(posyPS + rangeRandomAlgNuovo(10, 75));
+
+		}
+	}
+
+	for (int i = 0; i < nPuntiScia; i++) {
+		if (direzioneScia == "left") {
+
+			puntiScia[i].x = -rangeRandomAlg2(1, 4)+ posXPrecedentePuntiPS.at(i) - v0* tempo -1/2*a* tempo * tempo;
+			puntiScia[i].y = rangeRandomAlg2(1, 4) + posYPrecedentePuntiPS.at(i) + v0 * tempo - 1 / 2 * a * tempo * tempo;
+			//puntiScia[i].x = posXPrecedentePuntiPS.at(i) - fattoreVelocitaParticellaPS.at(i)/vitaPS;
+			//puntiScia[i].y = posYPrecedentePuntiPS.at(i) + fattoreVelocitaParticellaPS.at(i);
+			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
+			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
+			/*
+			puntiScia[i].x = posXPrecedentePuntiPS.at(i) - 4 * vitaPS / 30;
+			puntiScia[i].y =posYPrecedentePuntiPS.at(i) + dimensioneNemici + 4  * vitaPS / 30;
+			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
+			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
+			*/
+		}
+		else {
+			puntiScia[i].x = posXPrecedentePuntiPS.at(i) + dimensioneNemici + 4 * vitaPS / 30;
+			puntiScia[i].y =posYPrecedentePuntiPS.at(i) + dimensioneNemici + 4 * vitaPS / 30;
+			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
+			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
+		}
+
+		puntiScia[i].z = 0.0;
+		puntiScia[i].r = 1.0;
+		puntiScia[i].g = 0;
+		puntiScia[i].b = 0;
+		puntiScia[i].a = 1;
+	}
+
+
+	if (vitaPS < 60) {
+		vitaPS++;
+		glutPostRedisplay();
+		glutTimerFunc(5, updatePS2, 0);
+	}
+	else {
+		attivaPS = false;
+		vitaPS = 0;
+	}
+
+}
+
+
 
 
 void drawScene(void)
@@ -1248,18 +1324,15 @@ void drawScene(void)
 				attivaPS = true;
 				posxPS = posizioneXavversario;
 				posyPS = posizioneYavversario;
-				vitaPS = 0;
+				updatePS2(0);
 			}
 		}
 	}
 
-	if (vitaPS > 200) {
-		attivaPS = false;
-	}
+
 	if (attivaPS) {
-		//cout << "weeeeeeeeeeeeeeeeeeee";
-		vitaPS++;
-		updatePS(puntiScia, posxPS, posyPS);
+
+
 		glBindVertexArray(VAO_SCIA);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO_SCIA);
 		glBufferData(GL_ARRAY_BUFFER, nPuntiScia * sizeof(Point), &puntiScia[0], GL_STATIC_DRAW);
@@ -1424,7 +1497,7 @@ int main(int argc, char* argv[])
 	glutTimerFunc(50, update, 0);
 	glutTimerFunc(50, updateV, 0);
 	glutTimerFunc(50, updateNemici, 0);
-
+	//glutTimerFunc(50, updatePS2, 0);
 
 	glewExperimental = GL_TRUE;
 	glewInit();

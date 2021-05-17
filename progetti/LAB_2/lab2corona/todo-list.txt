@@ -32,6 +32,8 @@ caoticità al particle system)
 inoltre le direzioni di espansione della raggiera di punti sono coerenti con la direzione di arrivo del proiettile
 -tolto lampeggiamento avversari
 -da aggiornare bound colpimento giocatore da avversario: DA FARE UNA VOLTA DEFINITA LA NUOVA GEMETRIA DELL'AVVERSARIO
+-reso indipendente dal codice l'esecuzione del particle system
+
 -------------------------------------------------------------
 Cose da fare:
 -colori degli avversari devono essere diversi l'uno dall'altro con casualità red green blue: non è possibile in quanto la funzione disegna nemico
@@ -41,4 +43,3 @@ sono tutti fatti dallo stesso stampo, quello che si può fare al massimo è vari
 
 -----
 Corrente:
--colore del proiettile bianco si confonde con il bianco del quadrato avversario, da aggiustare
