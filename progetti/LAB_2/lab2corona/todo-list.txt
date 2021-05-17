@@ -26,15 +26,19 @@ Cosa ho fatto fino ad ora:
 -aggiustamento bound colpimento avversari in base alle nuove geometrie
 -rifatti i bound per il caso in cui il giocatore è colpito
 -rifatto il rimbalzo contro il muro di destra secondo la nuova geometria del giocatore
--implementato particle system in cui l'avversario quando viene colpito si lascia dietro una scia che si espande a raggiera secondo moto rettilineo uniformemente accelerato,
+-implementato particle system in cui l'avversario quando viene colpito si lascia dietro una scia che si espande a raggiera secondo moto rettilineo uniformemente accelerato (ogni 
+punto del particle system si muove con moto uniformemente accelerato, si differenziano l'uno dall'altro per uno scarto di accelerazione calcolato randomicamente per aggiungere
+caoticità al particle system)
 inoltre le direzioni di espansione della raggiera di punti sono coerenti con la direzione di arrivo del proiettile
+-tolto lampeggiamento avversari
+-da aggiornare bound colpimento giocatore da avversario: DA FARE UNA VOLTA DEFINITA LA NUOVA GEMETRIA DELL'AVVERSARIO
 -------------------------------------------------------------
 Cose da fare:
--colore del proiettile bianco si confonde con il bianco del quadrato avversario, da aggiustare
--da aggiornare bound colpimento giocatore da avversario: DA FARE UNA VOLTA DEFINITA LA NUOVA GEMETRIA DELL'AVVERSARIO
--(DA VALUTARE) implementare il particle system sulla scia del proiettile
--da togliere lampeggiamento avversari
--capire perché lampeggiano gli avversari
+-colori degli avversari devono essere diversi l'uno dall'altro con casualità red green blue: non è possibile in quanto la funzione disegna nemico
+viene richiamata nella init una volta sola per settare la configurazione degli avversari, quindi ogni avversario avrà colore uguale perché
+sono tutti fatti dallo stesso stampo, quello che si può fare al massimo è variare il colore in base al "tempo" che passa
+
 
 -----
 Corrente:
+-colore del proiettile bianco si confonde con il bianco del quadrato avversario, da aggiustare

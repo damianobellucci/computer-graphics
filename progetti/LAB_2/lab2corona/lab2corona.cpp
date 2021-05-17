@@ -297,8 +297,10 @@ double  radtodeg(double angle) {
 
 void update(int a)
 {
+
 	float timeValue = glutGet(GLUT_ELAPSED_TIME);
-	t = abs(sin(timeValue));
+	t = (sin(timeValue));
+
 	//printf("Valore di t %f \n", t);
 	glutPostRedisplay();
 	glutTimerFunc(50, update, 0);
@@ -652,19 +654,19 @@ void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggi
 		GiocatoreRettangolare[comp].x = cx;
 		GiocatoreRettangolare[comp].y = cy;
 		GiocatoreRettangolare[comp].z = 0.0;
-		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_top.a;
+		GiocatoreRettangolare[comp].r = color_bot.r; GiocatoreRettangolare[comp].g = color_bot.g; GiocatoreRettangolare[comp].b = color_bot.b; GiocatoreRettangolare[comp].a = color_bot.a;
 
 		//secondo  vertice triangolo
 		GiocatoreRettangolare[comp + 1].x = cx+ dimensioni_rettangolox;
 		GiocatoreRettangolare[comp + 1].y = cy ;
 		GiocatoreRettangolare[comp + 1].z = 0.0;
-		GiocatoreRettangolare[comp + 1].r = color_bot.r; GiocatoreRettangolare[comp + 1].g = color_bot.g; GiocatoreRettangolare[comp + 1].b = color_bot.b; GiocatoreRettangolare[comp + 1].a = color_bot.a;
+		GiocatoreRettangolare[comp + 1].r = color_top.r; GiocatoreRettangolare[comp + 1].g = color_top.g; GiocatoreRettangolare[comp + 1].b = color_top.b; GiocatoreRettangolare[comp + 1].a = color_top.a;
 
 		//terzo  vertice triangolo
 		GiocatoreRettangolare[comp + 2].x = cx;
 		GiocatoreRettangolare[comp + 2].y = cy + dimensioni_rettangoloy;
 		GiocatoreRettangolare[comp + 2].z = 0.0;
-		GiocatoreRettangolare[comp + 2].r = color_bot.r; GiocatoreRettangolare[comp + 2].g = color_bot.g; GiocatoreRettangolare[comp + 2].b = color_bot.b; GiocatoreRettangolare[comp + 2].a = color_bot.a;
+		GiocatoreRettangolare[comp + 2].r = color_top.r; GiocatoreRettangolare[comp + 2].g = color_top.g; GiocatoreRettangolare[comp + 2].b = color_top.b; GiocatoreRettangolare[comp + 2].a = color_top.a;
 
 		comp += 3;
 	}
@@ -682,13 +684,13 @@ void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggi
 		GiocatoreRettangolare[comp + 1].x = cx+ dimensioni_rettangolox;
 		GiocatoreRettangolare[comp + 1].y = cy;
 		GiocatoreRettangolare[comp + 1].z = 0.0;
-		GiocatoreRettangolare[comp + 1].r = color_bot.r; GiocatoreRettangolare[comp + 1].g = color_bot.g; GiocatoreRettangolare[comp + 1].b = color_bot.b; GiocatoreRettangolare[comp + 1].a = color_bot.a;
+		GiocatoreRettangolare[comp + 1].r = color_top.r; GiocatoreRettangolare[comp + 1].g = color_top.g; GiocatoreRettangolare[comp + 1].b = color_top.b; GiocatoreRettangolare[comp + 1].a = color_top.a;
 
 		//terzo  vertice triangolo
 		GiocatoreRettangolare[comp + 2].x = cx;
 		GiocatoreRettangolare[comp + 2].y = cy + dimensioni_rettangoloy;
 		GiocatoreRettangolare[comp + 2].z = 0.0;
-		GiocatoreRettangolare[comp + 2].r = color_bot.r; GiocatoreRettangolare[comp + 2].g = color_bot.g; GiocatoreRettangolare[comp + 2].b = color_bot.b; GiocatoreRettangolare[comp + 2].a = color_top.a;
+		GiocatoreRettangolare[comp + 2].r = color_top.r; GiocatoreRettangolare[comp + 2].g = color_top.g; GiocatoreRettangolare[comp + 2].b = color_top.b; GiocatoreRettangolare[comp + 2].a = color_top.a;
 
 		comp += 3;
 	}
@@ -707,6 +709,8 @@ void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 colo
 
 	float stepA = (2 * PI) / nTriangles;
 
+
+
 	int comp = 0;
 	for (int i = 0; i < 1; i++)
 	{
@@ -714,7 +718,7 @@ void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 colo
 		Cerchio[comp].x = cx  ;
 		Cerchio[comp].y = cy ;
 		Cerchio[comp].z = 0.0;
-		Cerchio[comp].r = color_bot.r; Cerchio[comp].g = color_bot.g; Cerchio[comp].b = color_bot.b; Cerchio[comp].a = color_top.a;
+		Cerchio[comp].r = color_top.r; Cerchio[comp].g = color_top.g; Cerchio[comp].b = color_top.b; Cerchio[comp].a = color_top.a;
 
 		//secondo  vertice triangolo
 		Cerchio[comp + 1].x = cx ;
@@ -759,7 +763,6 @@ void disegna_nemico(vec4 color_top_Nemico, vec4 color_bot_Nemico, vec4 color_top
 {
 
 
-	// Disegna faccia del Nemico
 	disegna_cerchio(0.0, 0.0, 1.0, 1.0, color_top_Nemico, color_bot_Nemico, Nemico);
 
 	/*// Disegna i due occhi
@@ -881,8 +884,10 @@ void init(void)
 	vector<int> timeInstant{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 
 	//Disegno SPAZIO/CIELO
-	vec4 col_top = { 1.0,1.0,1.0, 0.8 };
-	disegna_piano(0.0, 0.0, 1.0, 1.0, col_top, col_nero, Cielo);
+	vec4 col_top ={0.0,0.0,1,1 };
+	vec4 col_bot = { 1,1,1,1 };
+
+	disegna_piano(0.0, 0.0, 1.0, 1.0, col_bot, col_top, Cielo);
 	//Genero un VAO
 	glGenVertexArrays(1, &VAO_CIELO);
 	//Ne faccio il bind (lo collego, lo attivo)
@@ -902,9 +907,9 @@ void init(void)
 	
 	//////////////////////////////////////////////////////////////
 	//disegno palla protiettile
-	vec4 color_top_corpo = { 1.0,1.0,1.0,1.0 };
+	vec4 color_top_corpo = { 1.0,0.0,0,1 };
 	vec4 color_bot_corpo = { 1.0,1.0,1.0,1.0 };
-	disegna_cerchio5(0.0, -1.0, raggioxPalla, raggioyPalla, color_bot_corpo, color_bot_corpo, PallaProiettile);
+	disegna_cerchio5(0.0, -1.0, raggioxPalla, raggioyPalla, color_top_corpo, color_bot_corpo, PallaProiettile);
 	
 	glGenVertexArrays(1, &VAO_PALLA);
 	glBindVertexArray(VAO_PALLA);
@@ -922,8 +927,8 @@ void init(void)
 	//////////////////////////////////////////////////////////////
 
 	//Disegno NAVICELLA
-	vec4 color_top_Navicella = { 1.0,1.5,0.0,1.0 };
-	vec4 color_bot_Navicella = { 1.0,0.8,0.8,0.5 };
+	vec4 color_top_Navicella = { 0,0,0,1.0 };
+	vec4 color_bot_Navicella = { 0.5,0.9,1.0,0.9 };
 	vec4 color_top_Corpo = { 0.0,0.5,0.8,1.0 };
 	vec4 color_bot_Corpo = { 0.0,0.2,0.5,1.0 };
 	vec4 color_top_Oblo = { 0.2,0.9,0.1,1.0 };
@@ -944,9 +949,9 @@ void init(void)
 	//Scollego il VAO
 	glBindVertexArray(0);
 
-	//Disegna nemici
 	vec4 color_top_Nemico = { 1.0,1.0,1.0,0.3 };
 	vec4 color_top_Occhio = { 1.0,1.0,1.0,0.3 };
+
 	disegna_nemico(color_top_Nemico, col_bianco, color_top_Occhio, col_bianco, Nemico);
 	//Genero un VAO
 
@@ -1152,8 +1157,6 @@ void drawScene(void)
 
 	glBindVertexArray(0);
 	/////////////////////////
-
-
 
 
 	glUseProgram(programId_1); // attiva  fragment shader_1 solo per il nemico
