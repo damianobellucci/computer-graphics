@@ -22,11 +22,11 @@ int vitaScia = 0;
 float varOffsetSciaX;
 float varOffsetSciaY;
 
-float dimensionePalla = 30.0;
+float dimensionePalla = 16;
 int triangoliPalla = 9;
-float raggioxPalla = 0.6;
-float raggioyPalla = 0.6;
-float dimensioneNemici = 30.0;
+float raggioxPalla = 1;
+float raggioyPalla = 1;
+float dimensioneNemici = 60;
 
 int larghezzaGiocatore = 200;
 int altezzaGiocatore = 25;
@@ -726,12 +726,12 @@ void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 colo
 
 		//secondo  vertice triangolo
 		Cerchio[comp + 1].x = cx;
-		Cerchio[comp + 1].y = cy + 2;
+		Cerchio[comp + 1].y = cy +1;
 		Cerchio[comp + 1].z = 0.0;
 		Cerchio[comp + 1].r = color_bot.r; Cerchio[comp + 1].g = color_bot.g; Cerchio[comp + 1].b = color_bot.b; Cerchio[comp + 1].a = color_bot.a;
 
 		//terzo  vertice triangolo
-		Cerchio[comp + 2].x = cx + 2;
+		Cerchio[comp + 2].x = cx + 1;
 		Cerchio[comp + 2].y = cy;
 		Cerchio[comp + 2].z = 0.0;
 		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_bot.a;
@@ -742,20 +742,20 @@ void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 colo
 	for (int i = 0; i < 1; i++)
 	{
 		//primo vertice triangolo
-		Cerchio[comp].x = cx + 2;
+		Cerchio[comp].x = cx + 1;
 		Cerchio[comp].y = cy;
 		Cerchio[comp].z = 0.0;
 		Cerchio[comp].r = color_bot.r; Cerchio[comp].g = color_bot.g; Cerchio[comp].b = color_bot.b; Cerchio[comp].a = color_bot.a;
 
 		//secondo  vertice triangolo
 		Cerchio[comp + 1].x = cx;
-		Cerchio[comp + 1].y = cy + 2;
+		Cerchio[comp + 1].y = cy + 1;
 		Cerchio[comp + 1].z = 0.0;
 		Cerchio[comp + 1].r = color_bot.r; Cerchio[comp + 1].g = color_bot.g; Cerchio[comp + 1].b = color_bot.b; Cerchio[comp + 1].a = color_bot.a;
 
 		//terzo  vertice triangolo
-		Cerchio[comp + 2].x = cx + 2;
-		Cerchio[comp + 2].y = cy + 2;
+		Cerchio[comp + 2].x = cx + 1;
+		Cerchio[comp + 2].y = cy + 1;
 		Cerchio[comp + 2].z = 0.0;
 		Cerchio[comp + 2].r = color_bot.r; Cerchio[comp + 2].g = color_bot.g; Cerchio[comp + 2].b = color_bot.b; Cerchio[comp + 2].a = color_top.a;
 
@@ -1125,9 +1125,14 @@ void updatePS2(int v) {
 
 	if (vitaPS == 0) {
 		for (int i = 0; i < nPuntiScia; i++) {
-			posXPrecedentePuntiPS.at(i) =  rangeRandomAlgNuovo(10, 100);
-			posYPrecedentePuntiPS.at(i) =  rangeRandomAlgNuovo(10, 100);
-
+			if (direzioneScia == "left") {
+				posXPrecedentePuntiPS.at(i) = 0 - rangeRandomAlgNuovo(0 , dimensioneNemici);
+				posYPrecedentePuntiPS.at(i) = 0 + rangeRandomAlgNuovo(0, dimensioneNemici );
+			}
+			else {
+				posXPrecedentePuntiPS.at(i) = 0 + rangeRandomAlgNuovo(0, dimensioneNemici );
+				posYPrecedentePuntiPS.at(i) = 0 + rangeRandomAlgNuovo(0, dimensioneNemici );
+			}
 		}
 	}
 
@@ -1246,24 +1251,26 @@ void drawScene(void)
 	//////////////////////////////////////////////////////////////////////////
 
 
-	////////////////////////Disegno il proiettile puntiforme
-	/*
-	glBindVertexArray(VAO_SCIA);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glPointSize(8.0);
-	Model = mat4(1.0);
-	/*if (sparoInVolo) {
-		Model = translate(Model, vec3(firePosition + posx_Proiettile+ varOffsetSciaX, posy + posy_Proiettile+ varOffsetSciaY, 0));
-	}
-	else {
-		Model = translate(Model, vec3(posx + posx_Proiettile, posy + posy_Proiettile, 0));
-	}
-	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glDrawArrays(GL_POINTS,0, nPuntiScia);
-	glBindVertexArray(0);
+	if (false) {
+		////////////////////////Disegno il proiettile puntiforme
+		glBindVertexArray(VAO);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPointSize(8.0);
+		Model = mat4(1.0);
+		if (sparoInVolo) {
+			Model = translate(Model, vec3(firePosition + posx_Proiettile, posy + posy_Proiettile, 0));
+		}
+		else {
+			Model = translate(Model, vec3(posx + posx_Proiettile, posy + posy_Proiettile, 0));
+		}
 
-	*/
-	/////////////////////////////////////////
+		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
+		glDrawArrays(GL_POINTS, 6, 1);
+		glBindVertexArray(0);
+		/////////////////////////////////////////
+	}
+
+
 
 	///////////////////////////Disegno Navicella
 	glBindVertexArray(VAO);
@@ -1276,30 +1283,32 @@ void drawScene(void)
 	glBindVertexArray(0);
 	////////////////////////DISEGNO SCIA///////////////////////////////////
 
-	//////////////////////////DISEGNO PALLA PROIETTILE
+	if (true) {
+		//////////////////////////DISEGNO PALLA PROIETTILE
 
-	glBindVertexArray(VAO_PALLA);
+		glBindVertexArray(VAO_PALLA);
 
-	Model = mat4(1.0);
-	//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
+		Model = mat4(1.0);
+		//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
 
 
 
-	if (sparoInVolo) {
-		Model = translate(Model, vec3(firePosition + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
+		if (sparoInVolo) {
+			Model = translate(Model, vec3(firePosition + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
+		}
+		else {
+			Model = translate(Model, vec3(posx + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
+		}
+		Model = scale(Model, vec3(dimensionePalla, dimensionePalla, 1.0));
+
+		glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		// faccia e occhi
+		glDrawArrays(GL_TRIANGLES, 0, triangoliPalla * 3);
+
+		glBindVertexArray(0);
+		/////////////////////////
 	}
-	else {
-		Model = translate(Model, vec3(posx + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
-	}
-	Model = scale(Model, vec3(dimensionePalla, dimensionePalla, 1.0));
-
-	glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	// faccia e occhi
-	glDrawArrays(GL_TRIANGLES, 0, triangoliPalla * 3);
-
-	glBindVertexArray(0);
-	/////////////////////////
 
 
 	glUseProgram(programId_1); // attiva  fragment shader_1 solo per il nemico
@@ -1370,10 +1379,10 @@ void drawScene(void)
 		int bound = 60;
 		if (
 			(
-				(firePosition + posx_Proiettile + dimensionePalla / 2 >= posizioneXavversario)
-				&& (firePosition + posx_Proiettile - dimensionePalla / 2 <= posizioneXavversario + bound))
+				(firePosition + posx_Proiettile + dimensionePalla/2  >= posizioneXavversario)
+				&& (firePosition + posx_Proiettile -dimensionePalla/2   <= posizioneXavversario + dimensioneNemici))
 			&&
-			((posy + posy_Proiettile + dimensionePalla / 2 >= posizioneYavversario) && (posy + posy_Proiettile - dimensionePalla / 2 <= posizioneYavversario + bound))
+			((posy + posy_Proiettile + dimensionePalla / 2 >= posizioneYavversario) && (posy + posy_Proiettile -dimensionePalla / 2 <= posizioneYavversario + dimensioneNemici))
 			&&
 			!avversarioDisattivato.at(i)
 			)
@@ -1557,7 +1566,7 @@ int main(int argc, char* argv[])
 
 	glutInitWindowSize(width, height);
 	glutInitWindowPosition(50, 50);
-	window = glutCreateWindow("2D Game COV-19");
+	window = glutCreateWindow("2D Game");
 
 
 
