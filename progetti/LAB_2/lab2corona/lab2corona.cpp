@@ -1172,7 +1172,7 @@ void updatePS2(int v) {
 	if (vitaPS < 20) {
 		vitaPS++;
 		glutPostRedisplay();
-		glutTimerFunc(20, updatePS2, 0);
+		glutTimerFunc(8, updatePS2, 0);
 	}
 	else {
 		attivaPS = false;
@@ -1420,6 +1420,7 @@ void drawScene(void)
 
 
 	bool makeSwapBuffer = true;
+	bool giocatoreColpito = false;
 
 	//controllo se navicella è stata presa da un virus
 	for (int i = 0; i < numeroNemici; i++) {
@@ -1455,60 +1456,65 @@ void drawScene(void)
 		}
 	}
 
-	//controllo vittoria
+	if (!giocatoreColpito) {
+		//controllo vittoria
 
-	if (counterColpiti == numeroNemici && checkSwapBuffer < 1) {
-		cout << "\nhai vinto: hai ucciso tutti gli avversari\n";
-		//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
-		//std::chrono::milliseconds timespan(3000);
-		//std::this_thread::sleep_for(timespan);
-		checkSwapBuffer++;
+		if (counterColpiti == numeroNemici && checkSwapBuffer < 1) {
+			cout << "\nhai vinto: hai ucciso tutti gli avversari\n";
+			//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
+			//std::chrono::milliseconds timespan(3000);
+			//std::this_thread::sleep_for(timespan);
+			checkSwapBuffer++;
 
-		//makeSwapBuffer = false;
-		//glutDestroyWindow(window);
-
-
-	}
+			//makeSwapBuffer = false;
+			//glutDestroyWindow(window);
 
 
-	/*
-	// calcolo virus colpiti
-	for (int i = 0; i < numero_di_righe; i++)
-	{
-		posyN = height - i * passo_righe - 20 + rand() % 20;
-		for (int j = 0; j < nemici_per_riga; j++)
+		}
+
+
+
+
+
+		/*
+		// calcolo virus colpiti
+		for (int i = 0; i < numero_di_righe; i++)
 		{
-			posxN = j * (passo_Nemici)+passo_Nemici / 2 + rand() % 40;
-			//	printf("Posizione del proiettile: x= %f y=%f \n", posx + posx_Proiettile, posy + posy_Proiettile);
-			//	printf("BB nemico %d %d : xmin= %f ymin=%f  xmax=%f ymax=%f \n", i,j, posxN - 50 , posyN-50, + posx_Proiettile, posy + posy_Proiettile);
-			if (((firePosition + posx_Proiettile >= posxN + dxnemici - 50) && (firePosition + posx_Proiettile <= posxN + dxnemici + 50)) && ((posy + posy_Proiettile >= posyN + dynemici - 50) && (posy + posy_Proiettile <= posyN + dynemici + 50)))
+			posyN = height - i * passo_righe - 20 + rand() % 20;
+			for (int j = 0; j < nemici_per_riga; j++)
 			{
-				if (!colpito[i][j]) //se non era già stato colpito
+				posxN = j * (passo_Nemici)+passo_Nemici / 2 + rand() % 40;
+				//	printf("Posizione del proiettile: x= %f y=%f \n", posx + posx_Proiettile, posy + posy_Proiettile);
+				//	printf("BB nemico %d %d : xmin= %f ymin=%f  xmax=%f ymax=%f \n", i,j, posxN - 50 , posyN-50, + posx_Proiettile, posy + posy_Proiettile);
+				if (((firePosition + posx_Proiettile >= posxN + dxnemici - 50) && (firePosition + posx_Proiettile <= posxN + dxnemici + 50)) && ((posy + posy_Proiettile >= posyN + dynemici - 50) && (posy + posy_Proiettile <= posyN + dynemici + 50)))
 				{
-					NumeroColpiti++;
-					printf("Numero colpiti %d \n", NumeroColpiti);
-					colpito[i][j] = true;
+					if (!colpito[i][j]) //se non era già stato colpito
+					{
+						NumeroColpiti++;
+						printf("Numero colpiti %d \n", NumeroColpiti);
+						colpito[i][j] = true;
+					}
 				}
 			}
+		}*/
+
+
+
+
+
+		if (checkSwapBuffer < 2 && makeSwapBuffer)
+		{
+			glutSwapBuffers();
 		}
-	}*/
+		else {
+			std::chrono::milliseconds timespan(3000);
+			std::this_thread::sleep_for(timespan);
+			glutDestroyWindow(window);
+		}
 
-
-
-
-
-	if (checkSwapBuffer < 2)
-	{
-		glutSwapBuffers();
-	}
-	else {
-		std::chrono::milliseconds timespan(3000);
-		std::this_thread::sleep_for(timespan);
-		glutDestroyWindow(window);
-	}
-
-	if (checkSwapBuffer == 1) {
-		checkSwapBuffer++;
+		if (checkSwapBuffer == 1) {
+			checkSwapBuffer++;
+		}
 	}
 }
 
