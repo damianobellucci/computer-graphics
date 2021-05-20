@@ -89,88 +89,98 @@ void addNewPoint(float x, float y);
 void removeFirstPoint();
 void removeLastPoint();
 
-//algoritmo suddivisione adattiva
-void suddivisioneAdattiva(float tempArray[MaxNumPts][3], int NumPts)
+// Calcolo la distanza di un punto da un segmento
+float distToLine(vec3 pt1, vec3 pt2, vec3 point)
 {
-    float m, q, px, py, distanza;
-    int i;
-    //test di planarità sui control point esterni
-    float x1 = tempArray[0][0];
-    float y1 = tempArray[0][1];
-    float x2 = tempArray[NumPts - 1][0];
-    float y2 = tempArray[NumPts - 1][1];
-    int test_planarita = 1;
+    vec2 lineDir = pt2 - pt1;
+    vec2 perpDir = vec2(lineDir.y, -lineDir.x);
+    vec2 dirToPt1 = pt1 - point;
+    return abs(dot(normalize(perpDir), dirToPt1));
+}
 
-    //calcolo retta tra i due punti estremi
-    m = (y2 - y1) / (x2 - x1);
-    q = ((x2 * y1) - (x1 * y2)) / (x2 - x1);
+void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
+{
+    //test di planarità sui control point esterni. devo prendere i due punti più esterni per tirare la linea sulla quale dovrò calcolare la distanza per il test di planarità
 
-    //test di planarità sui control point interni
-    for (i = 1; i < NumPts - 1; i++)
+    bool continueRecursion = false;
+
+    vec3 firstPoint;
+    firstPoint[0] = points[0][0];
+    firstPoint[1] = points[0][1];
+    firstPoint[2] = 0;
+
+    vec3 lastPoint;
+    lastPoint[0] = points[nPoints - 1][0];
+    lastPoint[1] = points[nPoints - 1][1];
+    lastPoint[2] = 0;
+
+    //test di planarità sui control point interni. parto dal secondo (perché il primo è il primo estremo della retta per il test di planarità)
+    for (int i = 1; i < nPoints - 1; i++)
     {
-        px = tempArray[i][0];
-        py = tempArray[i][1];
-        if (x1 != x2) //se la retta non ha pendenza infinita
-        {
-            distanza = (float)(m * px - py + q);
-            if (distanza < 0)
-                distanza = -distanza;
-            distanza = distanza / sqrt((float)(pow(m, 2) + 1));
-            distanza = distanza;
-        }
-        else
-            distanza = px * x1;
-        if (distanza > quota_planarita)
-            test_planarita = 0;
+        vec3 nextPoint;
+        nextPoint[0] = points[i][0];
+        nextPoint[1] = points[i][1];
+        nextPoint[2] = 0;
+
+        //eseguo il test di planarità
+        float dist = distToLine(firstPoint, lastPoint, nextPoint);
+
+        //se distanza tra punto e retta è maggiore della tolleranza scelta, allora devo continuare a suddividere perché l'interpolazione non è abbastanza precisa secondo i parametri
+        if (dist > quota_planarita)
+            continueRecursion = true;
     }
-    if (test_planarita == 1)
-    {
-        NumPtsS = 0;
-        CurveArray[NumPtsS][0] = x1;
-        CurveArray[NumPtsS][1] = y1;
-        CurveArray[NumPtsS][2] = 0.0;
-        NumPtsS = NumPtsS + 1;
-        CurveArray[NumPtsS][0] = x2;
-        CurveArray[NumPtsS][1] = y2;
-        CurveArray[NumPtsS][2] = 0.0;
+    //caso in cui possono tirare disegnare una linea dritta tra i due punti estremi in quanto il test di planarità è stato soddisfatto
+    if (continueRecursion) {
+        {
+            float firstHalfCurve[MaxNumPts][3];
+            float secondHalfCurve[MaxNumPts][3];
+            //carico i nuovi punti
+            for (int i = 0; i < nPoints; i++)
+            {
+                firstHalfCurve[i][0] = points[0][0];
+                firstHalfCurve[i][1] = points[0][1];
+                secondHalfCurve[nPoints - i - 1][0] = points[nPoints - i - 1][0];
+                secondHalfCurve[nPoints - i - 1][1] = points[nPoints - i - 1][1];
 
-        //draw the curve points
+                //applicazione decasteljau per le due sottocurve per calcolare i punti intermedi di ogni sottocurva
+                for (int j = 0; j < 2; j++)
+                    for (int k = 0; k < nPoints; k++)
+                    {
+                        //calcolo della lerp
+                        points[k][j] = points[k][j] * (1 - costante_subdivision) + points[k + 1][j] * costante_subdivision;
+                    }
+            }
+            //vado in ricorsione sulle due sottocurve ottenute dividendo quella iniziale
+            adaptiveSubdivision(firstHalfCurve, nPoints);
+            adaptiveSubdivision(secondHalfCurve, nPoints);
+        }
+    }
+    else
+    {
+        //imposto le coordinate dei due punti che saranno gli estremi del segmento da disegnare
+
+        CurveArray[0][0] = firstPoint[0];
+        CurveArray[0][1] = firstPoint[1];
+        CurveArray[0][2] = 0;
+
+        CurveArray[1][0] = lastPoint[0];
+        CurveArray[1][1] = lastPoint[1];
+        CurveArray[1][2] = 0;
+
         glBindVertexArray(VAO_2);
         glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
         glBufferData(GL_ARRAY_BUFFER, sizeof(CurveArray), &CurveArray[0], GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
-        glLineWidth(0.5);
+        glLineWidth(2);
         glDrawArrays(GL_LINE_STRIP, 0, 2);
         glBindVertexArray(0);
         numero_tratti++;
         return;
     }
-    else
-    {
-        float subd_1[MaxNumPts][3];
-        float subd_2[MaxNumPts][3];
-        for (i = 0; i < NumPts; i++)
-        {
-            subd_1[i][0] = tempArray[0][0];
-            subd_1[i][1] = tempArray[0][1];
-            subd_2[NumPts - i - 1][0] = tempArray[NumPts - i - 1][0];
-            subd_2[NumPts - i - 1][1] = tempArray[NumPts - i - 1][1];
-            for (xy = 0; xy < 2; xy++)
-                for (j = 0; j < NumPts; j++)
-                {
-                    float a = tempArray[j][xy] * (1 - costante_subdivision);
-                    float b = tempArray[j + 1][xy] * costante_subdivision;
-                    tempArray[j][xy] = a + b;
-                }
-        }
-        suddivisioneAdattiva(subd_1, NumPts);
-        suddivisioneAdattiva(subd_2, NumPts);
-    }
     return;
 }
-
 /*
 Funzione che data in input alla glutKeyboardFunc
 
@@ -183,12 +193,16 @@ void myKeyboardFunc(unsigned char key, int x, int y)
     switch (key)
     {
     case 'f':
-        removeFirstPoint();
-        glutPostRedisplay();
+        if (NumPts > 0) {
+            removeFirstPoint();
+            glutPostRedisplay();
+        }
         break;
     case 'l':
-        removeLastPoint();
-        glutPostRedisplay();
+        if (NumPts > 0) {
+            removeLastPoint();
+            glutPostRedisplay();
+        }
         break;
     case 27: // Escape key
         exit(0);
@@ -241,9 +255,12 @@ void resizeWindow(int w, int h)
 Funzione da dare in input alla glutMouseFunc
 
 serve per controllare i comandi di spostamento punti di controllo
-tramite mouse
+tramite mouse.
+
+La funzione mymouseFunc è una callback di glute mouse function e gli argomenti vengono passati direttamente da opengl,
+quindi la funzione mymouse function viene solo passata alla glut mouse function e non chiamata in altre parti del codice.
 */
-void myMouseFunc(int button, int state, int x, int y)
+void checkPointClickorNew (int button, int state, int x, int y)
 {
 
     /*condizione per controllare che tasto sinistro sia stato premuto e
@@ -253,6 +270,8 @@ void myMouseFunc(int button, int state, int x, int y)
     */
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
+
+        //in questo caso la porzione di finestra è stata premuta per spostare un punto e non per crearne un altro
         if (mouseOverIndex != -1)
         {
             isMovingPoint = true;
@@ -278,12 +297,19 @@ senza che venga toccato un altro comando. Il compito di questa funzione
 è quello di attivare il flag mouse over index se si rileva che la distanza
 del puntatore ed uno dei punti di controllo disegnati è sotto una certa soglia,
 cioè il puntatore è approssimabilmente sopra il punto.
+
+Questa funzione è una callback della funzione opengl glutPassiveMotionFunc, quindi viene direttamente
+passata ad essa e non richiamata in altre parti del codice. I parametri xy vengo passati direttamente da opengl
 */
 void myPassiveMotionFunction(int x, int y)
 {
+    //xy sono le coordinate del puntatore mouse al momento, da viewport devono essere trasformate a window
     float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
     float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
 
+    //se uno dei punti nella finestra si avvicina di un tot alle coordinate del puntatore, allora si attiva il mouseOverIndex
+    //per quel punto, infatti mouse over index ci dirà quale i-esimo punto è puntato al momento. se mouseoverindex è -1
+    //allora vuol dire che nessun punto è vicino alle coordinate del puntatore del mouse
     for (int i = 0; i < NumPts; i++)
     {
         float dist = sqrt(pow(PointArray[i][0] - xPos, 2) + pow(PointArray[i][1] - yPos, 2));
@@ -307,11 +333,12 @@ Funzione da dare in input alla glutMotionFunc
 permette di aggiornare le posizioni de punti di controllo
 mentre vengono spostati
 */
-void myMotionFunction(int x, int y)
+void spostaPunto(int x, int y)
 {
     float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
     float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
 
+    //se il punto è stato toccato per essere trascinato bisogna aggiornare le sue posizioni
     if (isMovingPoint)
     {
         PointArray[movingPoint][0] = xPos;
@@ -415,15 +442,18 @@ void drawScene(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+
+    //si disegnano prima i segmenti che uniscono i punti (line strip), poi i punti
     // Draw the line segments
     glLineWidth(2.5);
     glDrawArrays(GL_LINE_STRIP, 0, NumPts);
 
-    // Draw the points
+    // Draw the points (si disegnano i punti di controllo delle linee)
     glPointSize(8.0);
     glDrawArrays(GL_POINTS, 0, NumPts);
     glBindVertexArray(0);
 
+    //se ci sono almeno due punti nella finestra allora si potranno appllicare o de casteljau o suddivisione adattiva in base alla scelta effettuata all'inizio
     if (NumPts > 1)
     {
         float result[3];
@@ -441,22 +471,26 @@ void drawScene(void)
             glBindVertexArray(VAO_2);
             glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
             glBufferData(GL_ARRAY_BUFFER, sizeof(CurveArray), &CurveArray[0], GL_STATIC_DRAW);
+            //ci sono solo gli attributi di posizione
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
             glEnableVertexAttribArray(0);
 
+            //si disegnano i punti interpolati con algoritmo de casteljau
             glLineWidth(0.5);
             glDrawArrays(GL_LINE_STRIP, 0, 101);
             glBindVertexArray(0);
         }
-        //adaptive subdivision case
+        //caso della suddivisione adattiva
         else if (choosedDrawModality == 1)
         {
-            {
+
+            {//per ogni punto devo prendere la x e y che metto in un array temporaneo che è la copia del mio pointarray
                 for (xy = 0; xy < 2; xy++)
                     for (j = 0; j < NumPts; j++)
                         tempArray[j][xy] = PointArray[j][xy];
                 numero_tratti = 0;
-                suddivisioneAdattiva(tempArray, NumPts);
+                //una volta caricato il vettore tempArray applico la suddivisione adattiva, al suo interno avverà anche la draw
+                adaptiveSubdivision(tempArray, NumPts);
             }
         }
     }
@@ -466,11 +500,16 @@ void drawScene(void)
 int main(int argc, char** argv)
 {
 
-    printf("digit 0 for de casteljau, 1 for adaptive subdivision: ");
+    printf("digitare 0 per de casteljau, 1 for suddivisione adattiva: ");
 
     cin >> choosedDrawModality;
 
-    printf("user has choosen: %d\n", choosedDrawModality);
+    if (choosedDrawModality == 1) {
+        cout << "\nScegli una quota di planarita: ";
+        cin >> quota_planarita;
+    }
+
+
 
     glutInit(&argc, argv);
 
@@ -487,8 +526,8 @@ int main(int argc, char** argv)
     glutReshapeFunc(resizeWindow);
 
     glutKeyboardFunc(myKeyboardFunc);
-    glutMouseFunc(myMouseFunc);
-    glutMotionFunc(myMotionFunction);
+    glutMouseFunc(checkPointClickorNew);
+    glutMotionFunc(spostaPunto);
     glutPassiveMotionFunc(myPassiveMotionFunction);
 
     glewExperimental = GL_TRUE;
