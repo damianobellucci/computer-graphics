@@ -44,17 +44,17 @@
 disegnabili oltre la quale se si disegna un nuovo punto verrà eliminato
 un'altro all'inizio
 */
-#define MaxNumPts 120
+#define nMaxPoints 120
 
-int choosedDrawModality;
+int chosenModality;
 
 static unsigned int programId;
 
-unsigned int VAO;
-unsigned int VBO;
+unsigned int VAO_CONTROL_POLYGON;
+unsigned int VBO_CONTROL_POLYGON;
 
-unsigned int VAO_2;
-unsigned int VBO_2;
+unsigned int VAO_CURVE_POINTS;
+unsigned int VBO_CURVE_POINTS;
 
 using namespace glm;
 
@@ -63,22 +63,22 @@ int mouseOverIndex = -1;
 bool isMovingPoint = false;
 int movingPoint = -1;
 
-float pointsInWindow[MaxNumPts][3];
+float pointsInWindow[nMaxPoints][3];
 
-float pointsCurve[MaxNumPts][3];
+float pointsCurve[nMaxPoints][3];
 
 // Window size in pixels
 int width = 500;
 int height = 500;
 
-int NumPts = 0;
+int nCurrentPoints = 0;
 int NumPtsS = 0;
 
-float points[MaxNumPts][3];
+float points[nMaxPoints][3];
 float subdivisionFactor = 0.5;
 
 //parametro di precisione suddivisione adattiva
-float precisionPlanarity = 0.01;
+float precisionPlanarity;
 
 int i, j, xy;
 float x = 0, y = 0;
@@ -99,10 +99,8 @@ float distToLine(vec3 pt1, vec3 pt2, vec3 point)
 }
 
 //algoritmo di suddivisione adattiva
-void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
+void adaptiveSubdivision(float points[nMaxPoints][3], int nPoints)
 {
-    //test di planarità sui control point esterni. devo prendere i due punti più esterni per tirare la linea sulla quale dovrò calcolare la distanza per il test di planarità
-
     bool continueRecursion = false;
 
     vec3 firstPoint;
@@ -130,35 +128,39 @@ void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
         if (dist > precisionPlanarity)
             continueRecursion = true;
     }
-    //caso in cui possono tirare disegnare una linea dritta tra i due punti estremi in quanto il test di planarità è stato soddisfatto
     if (continueRecursion) {
         {
-            float firstHalfCurve[MaxNumPts][3];
-            float secondHalfCurve[MaxNumPts][3];
+            float firstHalfCurve[nMaxPoints][3];
+            float secondHalfCurve[nMaxPoints][3];
+
             //carico i nuovi punti
             for (int i = 0; i < nPoints; i++)
             {
                 firstHalfCurve[i][0] = points[0][0];
                 firstHalfCurve[i][1] = points[0][1];
-                secondHalfCurve[nPoints - i - 1][0] = points[nPoints - i - 1][0];
+                secondHalfCurve[nPoints- i - 1][0] = points[nPoints - i - 1][0];
                 secondHalfCurve[nPoints - i - 1][1] = points[nPoints - i - 1][1];
 
                 //applicazione decasteljau per le due sottocurve per calcolare i punti intermedi di ogni sottocurva
                 for (int j = 0; j < 2; j++)
-                    for (int k = 0; k < nPoints; k++)
+                    for (int k = 0; k < nPoints-1; k++) //se i punti sono 3 si fa solo 0 ed 1
                     {
                         //calcolo della lerp
                         points[k][j] = points[k][j] * (1 - subdivisionFactor) + points[k + 1][j] * subdivisionFactor;
                     }
             }
             //vado in ricorsione sulle due sottocurve ottenute dividendo quella iniziale
+
+            //passo le due sottocurve in ricorsione passando anche la dimensione delle due sottocurve. Siccome le due sottocurve ottenute
+            //hanno lo stesso numero di punti di quella di partenza, si passa sempre npoints. prima o poi si finirà quando è stato soddisfatto il test per la precisione.
             adaptiveSubdivision(firstHalfCurve, nPoints);
             adaptiveSubdivision(secondHalfCurve, nPoints);
         }
     }
+    //caso in cui possono tirare disegnare una linea dritta tra i due punti estremi in quanto il test di planarità è stato soddisfatto
     else
     {
-        //imposto le coordinate dei due punti che saranno gli estremi del segmento da disegnare
+        //imposto le coordinate dei due punti che saranno gli estremi del segmento da disegnare perché il test di planarità è stato soddisfatto
 
         pointsCurve[0][0] = firstPoint[0];
         pointsCurve[0][1] = firstPoint[1];
@@ -168,16 +170,14 @@ void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
         pointsCurve[1][1] = lastPoint[1];
         pointsCurve[1][2] = 0;
 
-        glBindVertexArray(VAO_2);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
+        glBindVertexArray(VAO_CURVE_POINTS);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_CURVE_POINTS);
         glBufferData(GL_ARRAY_BUFFER, sizeof(pointsCurve), &pointsCurve[0], GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
-
-        glLineWidth(2);
+        glLineWidth(4);
         glDrawArrays(GL_LINE_STRIP, 0, 2);
         glBindVertexArray(0);
-
         return;
     }
     return;
@@ -195,13 +195,13 @@ void myKeyboardFunc(unsigned char key, int x, int y)
     switch (key)
     {
     case 'f':
-        if (NumPts > 0) {
+        if (nCurrentPoints > 0) {
             removeFirstPoint();
             glutPostRedisplay();
         }
         break;
     case 'l':
-        if (NumPts > 0) {
+        if (nCurrentPoints > 0) {
             removeLastPoint();
             glutPostRedisplay();
         }
@@ -220,11 +220,11 @@ ecceduto
 void removeFirstPoint()
 {
     int i;
-    if (NumPts > 0)
+    if (nCurrentPoints > 0)
     {
         // Remove the first point, slide the rest down
-        NumPts--;
-        for (i = 0; i < NumPts; i++)
+        nCurrentPoints--;
+        for (i = 0; i < nCurrentPoints; i++)
         {
             pointsInWindow[i][0] = pointsInWindow[i + 1][0];
             pointsInWindow[i][1] = pointsInWindow[i + 1][1];
@@ -239,9 +239,9 @@ se viene sorprassato il numero massimo di punti ammissibili
 */
 void removeLastPoint()
 {
-    if (NumPts > 0)
+    if (nCurrentPoints > 0)
     {
-        NumPts--;
+        nCurrentPoints--;
     }
 }
 
@@ -312,7 +312,7 @@ void myPassiveMotionFunction(int x, int y)
     //se uno dei punti nella finestra si avvicina di un tot alle coordinate del puntatore, allora si attiva il mouseOverIndex
     //per quel punto, infatti mouse over index ci dirà quale i-esimo punto è puntato al momento. se mouseoverindex è -1
     //allora vuol dire che nessun punto è vicino alle coordinate del puntatore del mouse
-    for (int i = 0; i < NumPts; i++)
+    for (int i = 0; i < nCurrentPoints; i++)
     {
         float dist = sqrt(pow(pointsInWindow[i][0] - xPos, 2) + pow(pointsInWindow[i][1] - yPos, 2));
         if (dist < 0.03)
@@ -356,14 +356,14 @@ nella lista se ci sono troppi punti.
 */
 void addNewPoint(float x, float y)
 {
-    if (NumPts >= MaxNumPts)
+    if (nCurrentPoints >= nMaxPoints)
     {
         removeFirstPoint();
     }
-    pointsInWindow[NumPts][0] = x;
-    pointsInWindow[NumPts][1] = y;
-    pointsInWindow[NumPts][2] = 0;
-    NumPts++;
+    pointsInWindow[nCurrentPoints][0] = x;
+    pointsInWindow[nCurrentPoints][1] = y;
+    pointsInWindow[nCurrentPoints][2] = 0;
+    nCurrentPoints++;
 }
 
 void initShader(void)
@@ -384,44 +384,43 @@ void init(void)
 {
 
     //control polygon data
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glGenVertexArrays(1, &VAO_CONTROL_POLYGON);
+    glBindVertexArray(VAO_CONTROL_POLYGON);
+    glGenBuffers(1, &VBO_CONTROL_POLYGON);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_CONTROL_POLYGON);
 
     //curve points data
-    glGenVertexArrays(1, &VAO_2);
-    glBindVertexArray(VAO_2);
-    glGenBuffers(1, &VBO_2);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
+    glGenVertexArrays(1, &VAO_CURVE_POINTS);
+    glBindVertexArray(VAO_CURVE_POINTS);
+    glGenBuffers(1, &VBO_CURVE_POINTS);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_CURVE_POINTS);
 
     // Background color
     glClearColor(1.0, 1.0, 1.0, 1.0);
     glViewport(0, 0, width, height);
 }
 
-void deCasteljau(float t, float* result)
+//Algoritmo deCasteljau, parametri t e 
+void deCasteljau(float t, float* curve)
 {
-    int i, k;
-    float coordX[MaxNumPts], coordY[MaxNumPts];
+    float curveX[nMaxPoints], curveY[nMaxPoints];
 
-    for (i = 0; i < NumPts; i++)
+    for (int i = 0; i < nCurrentPoints; i++)
     {
-        coordX[i] = pointsInWindow[i][0];
-        coordY[i] = pointsInWindow[i][1];
+        curveX[i] = pointsInWindow[i][0];
+        curveY[i] = pointsInWindow[i][1];
     }
-
-    for (i = 1; i < NumPts; i++)
+    for (int i = 1; i < nCurrentPoints; i++)
     {
-        for (k = 0; k < NumPts - i; k++)
+        for (int k = 0; k < nCurrentPoints - i; k++)
         {
-            coordX[k] = (1 - t) * coordX[k] + (t)*coordX[k + 1];
-            coordY[k] = (1 - t) * coordY[k] + (t)*coordY[k + 1];
+            curveX[k] = (1 - t) * curveX[k] + (t)*curveX[k + 1];
+            curveY[k] = (1 - t) * curveY[k] + (t)*curveY[k + 1];
         }
     }
-    result[0] = coordX[0];
-    result[1] = coordY[0];
-    result[2] = 0.0;
+    curve[0] = curveX[0];
+    curve[1] = curveY[0];
+    curve[2] = 0.0;
 }
 
 /*
@@ -438,8 +437,8 @@ void drawScene(void)
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindVertexArray(VAO_CONTROL_POLYGON);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_CONTROL_POLYGON);
     glBufferData(GL_ARRAY_BUFFER, sizeof(pointsInWindow), &pointsInWindow[0], GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -447,51 +446,53 @@ void drawScene(void)
 
     //si disegnano prima i segmenti che uniscono i punti (line strip), poi i punti
     // Draw the line segments
-    glLineWidth(2.5);
-    glDrawArrays(GL_LINE_STRIP, 0, NumPts);
+    glLineWidth(1);
+    glDrawArrays(GL_LINE_STRIP, 0, nCurrentPoints);
 
     // Draw the points (si disegnano i punti di controllo delle linee)
-    glPointSize(8.0);
-    glDrawArrays(GL_POINTS, 0, NumPts);
+    glPointSize(16.0);
+    glDrawArrays(GL_POINTS, 0, nCurrentPoints);
     glBindVertexArray(0);
 
     //se ci sono almeno due punti nella finestra allora si potranno appllicare o de casteljau o suddivisione adattiva in base alla scelta effettuata all'inizio
-    if (NumPts > 1)
+    if (nCurrentPoints > 1)
     {
-        float result[3];
+        float curve[3];
         
-        if (choosedDrawModality == 1)
+        if (chosenModality == 1)
         {
             for (i = 0; i <= 100; i++)
             {
-                deCasteljau((GLfloat)i / 100, result);
-                pointsCurve[i][0] = result[0];
-                pointsCurve[i][1] = result[1];
+                //tramite i/100 parametrizzo la t tra 0 ed 1
+                deCasteljau((float)i / 100, curve);
+                //trattengo i punti xy da disegnare in seguito
+                pointsCurve[i][0] = curve[0];
+                pointsCurve[i][1] = curve[1];
                 pointsCurve[i][2] = 0;
             }
 
-            glBindVertexArray(VAO_2);
-            glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
+            glBindVertexArray(VAO_CURVE_POINTS);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO_CURVE_POINTS);
             glBufferData(GL_ARRAY_BUFFER, sizeof(pointsCurve), &pointsCurve[0], GL_STATIC_DRAW);
             //ci sono solo gli attributi di posizione
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
             glEnableVertexAttribArray(0);
 
             //si disegnano i punti interpolati con algoritmo de casteljau
-            glLineWidth(0.5);
+            glLineWidth(4);
             glDrawArrays(GL_LINE_STRIP, 0, 101);
             glBindVertexArray(0);
         }
         //caso della suddivisione adattiva
-        else if (choosedDrawModality == 2)
+        else if (chosenModality == 2)
         {
             {//per ogni punto devo prendere la x e y che metto in un array temporaneo che è la copia del mio pointsInWindow
                 for (int i = 0; i < 2; i++)
-                    for (int j = 0; j < NumPts; j++)
+                    for (int j = 0; j < nCurrentPoints; j++)
                         points[j][i] = pointsInWindow[j][i];
 
                 //una volta caricato il vettore tempArray applico la suddivisione adattiva, al suo interno avverà anche la draw
-                adaptiveSubdivision(points, NumPts);
+                adaptiveSubdivision(points, nCurrentPoints);
             }
         }
     }
@@ -503,9 +504,9 @@ int main(int argc, char** argv)
 
     printf("digitare 1 per de casteljau, 2 for suddivisione adattiva: ");
 
-    cin >> choosedDrawModality;
+    cin >> chosenModality;
 
-    if (choosedDrawModality == 2) {
+    if (chosenModality == 2) {
         cout << "\nScegli una quota di planarita: ";
         cin >> precisionPlanarity;
     }
