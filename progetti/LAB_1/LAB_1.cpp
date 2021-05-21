@@ -63,9 +63,9 @@ int mouseOverIndex = -1;
 bool isMovingPoint = false;
 int movingPoint = -1;
 
-float PointArray[MaxNumPts][3];
+float pointsInWindow[MaxNumPts][3];
 
-float CurveArray[MaxNumPts][3];
+float pointsCurve[MaxNumPts][3];
 
 // Window size in pixels
 int width = 500;
@@ -74,15 +74,15 @@ int height = 500;
 int NumPts = 0;
 int NumPtsS = 0;
 
-float tempArray[MaxNumPts][3];
-float costante_subdivision = 0.5;
+float points[MaxNumPts][3];
+float subdivisionFactor = 0.5;
 
 //parametro di precisione suddivisione adattiva
-float quota_planarita = 0.01;
+float precisionPlanarity = 0.01;
 
 int i, j, xy;
 float x = 0, y = 0;
-int numero_tratti;
+
 
 /* Prototypes */
 void addNewPoint(float x, float y);
@@ -98,6 +98,7 @@ float distToLine(vec3 pt1, vec3 pt2, vec3 point)
     return abs(dot(normalize(perpDir), dirToPt1));
 }
 
+//algoritmo di suddivisione adattiva
 void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
 {
     //test di planarità sui control point esterni. devo prendere i due punti più esterni per tirare la linea sulla quale dovrò calcolare la distanza per il test di planarità
@@ -126,7 +127,7 @@ void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
         float dist = distToLine(firstPoint, lastPoint, nextPoint);
 
         //se distanza tra punto e retta è maggiore della tolleranza scelta, allora devo continuare a suddividere perché l'interpolazione non è abbastanza precisa secondo i parametri
-        if (dist > quota_planarita)
+        if (dist > precisionPlanarity)
             continueRecursion = true;
     }
     //caso in cui possono tirare disegnare una linea dritta tra i due punti estremi in quanto il test di planarità è stato soddisfatto
@@ -147,7 +148,7 @@ void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
                     for (int k = 0; k < nPoints; k++)
                     {
                         //calcolo della lerp
-                        points[k][j] = points[k][j] * (1 - costante_subdivision) + points[k + 1][j] * costante_subdivision;
+                        points[k][j] = points[k][j] * (1 - subdivisionFactor) + points[k + 1][j] * subdivisionFactor;
                     }
             }
             //vado in ricorsione sulle due sottocurve ottenute dividendo quella iniziale
@@ -159,28 +160,29 @@ void adaptiveSubdivision(float points[MaxNumPts][3], int nPoints)
     {
         //imposto le coordinate dei due punti che saranno gli estremi del segmento da disegnare
 
-        CurveArray[0][0] = firstPoint[0];
-        CurveArray[0][1] = firstPoint[1];
-        CurveArray[0][2] = 0;
+        pointsCurve[0][0] = firstPoint[0];
+        pointsCurve[0][1] = firstPoint[1];
+        pointsCurve[0][2] = 0;
 
-        CurveArray[1][0] = lastPoint[0];
-        CurveArray[1][1] = lastPoint[1];
-        CurveArray[1][2] = 0;
+        pointsCurve[1][0] = lastPoint[0];
+        pointsCurve[1][1] = lastPoint[1];
+        pointsCurve[1][2] = 0;
 
         glBindVertexArray(VAO_2);
         glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(CurveArray), &CurveArray[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(pointsCurve), &pointsCurve[0], GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
         glLineWidth(2);
         glDrawArrays(GL_LINE_STRIP, 0, 2);
         glBindVertexArray(0);
-        numero_tratti++;
+
         return;
     }
     return;
 }
+
 /*
 Funzione che data in input alla glutKeyboardFunc
 
@@ -224,9 +226,9 @@ void removeFirstPoint()
         NumPts--;
         for (i = 0; i < NumPts; i++)
         {
-            PointArray[i][0] = PointArray[i + 1][0];
-            PointArray[i][1] = PointArray[i + 1][1];
-            PointArray[i][2] = 0;
+            pointsInWindow[i][0] = pointsInWindow[i + 1][0];
+            pointsInWindow[i][1] = pointsInWindow[i + 1][1];
+            pointsInWindow[i][2] = 0;
         }
     }
 }
@@ -312,7 +314,7 @@ void myPassiveMotionFunction(int x, int y)
     //allora vuol dire che nessun punto è vicino alle coordinate del puntatore del mouse
     for (int i = 0; i < NumPts; i++)
     {
-        float dist = sqrt(pow(PointArray[i][0] - xPos, 2) + pow(PointArray[i][1] - yPos, 2));
+        float dist = sqrt(pow(pointsInWindow[i][0] - xPos, 2) + pow(pointsInWindow[i][1] - yPos, 2));
         if (dist < 0.03)
         {
             mouseOverIndex = i;
@@ -341,8 +343,8 @@ void spostaPunto(int x, int y)
     //se il punto è stato toccato per essere trascinato bisogna aggiornare le sue posizioni
     if (isMovingPoint)
     {
-        PointArray[movingPoint][0] = xPos;
-        PointArray[movingPoint][1] = yPos;
+        pointsInWindow[movingPoint][0] = xPos;
+        pointsInWindow[movingPoint][1] = yPos;
     }
     glutPostRedisplay();
 }
@@ -358,9 +360,9 @@ void addNewPoint(float x, float y)
     {
         removeFirstPoint();
     }
-    PointArray[NumPts][0] = x;
-    PointArray[NumPts][1] = y;
-    PointArray[NumPts][2] = 0;
+    pointsInWindow[NumPts][0] = x;
+    pointsInWindow[NumPts][1] = y;
+    pointsInWindow[NumPts][2] = 0;
     NumPts++;
 }
 
@@ -405,8 +407,8 @@ void deCasteljau(float t, float* result)
 
     for (i = 0; i < NumPts; i++)
     {
-        coordX[i] = PointArray[i][0];
-        coordY[i] = PointArray[i][1];
+        coordX[i] = pointsInWindow[i][0];
+        coordY[i] = pointsInWindow[i][1];
     }
 
     for (i = 1; i < NumPts; i++)
@@ -438,7 +440,7 @@ void drawScene(void)
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(PointArray), &PointArray[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(pointsInWindow), &pointsInWindow[0], GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -458,19 +460,19 @@ void drawScene(void)
     {
         float result[3];
         
-        if (choosedDrawModality == 0)
+        if (choosedDrawModality == 1)
         {
             for (i = 0; i <= 100; i++)
             {
                 deCasteljau((GLfloat)i / 100, result);
-                CurveArray[i][0] = result[0];
-                CurveArray[i][1] = result[1];
-                CurveArray[i][2] = 0;
+                pointsCurve[i][0] = result[0];
+                pointsCurve[i][1] = result[1];
+                pointsCurve[i][2] = 0;
             }
 
             glBindVertexArray(VAO_2);
             glBindBuffer(GL_ARRAY_BUFFER, VBO_2);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(CurveArray), &CurveArray[0], GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(pointsCurve), &pointsCurve[0], GL_STATIC_DRAW);
             //ci sono solo gli attributi di posizione
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
             glEnableVertexAttribArray(0);
@@ -481,16 +483,15 @@ void drawScene(void)
             glBindVertexArray(0);
         }
         //caso della suddivisione adattiva
-        else if (choosedDrawModality == 1)
+        else if (choosedDrawModality == 2)
         {
+            {//per ogni punto devo prendere la x e y che metto in un array temporaneo che è la copia del mio pointsInWindow
+                for (int i = 0; i < 2; i++)
+                    for (int j = 0; j < NumPts; j++)
+                        points[j][i] = pointsInWindow[j][i];
 
-            {//per ogni punto devo prendere la x e y che metto in un array temporaneo che è la copia del mio pointarray
-                for (xy = 0; xy < 2; xy++)
-                    for (j = 0; j < NumPts; j++)
-                        tempArray[j][xy] = PointArray[j][xy];
-                numero_tratti = 0;
                 //una volta caricato il vettore tempArray applico la suddivisione adattiva, al suo interno avverà anche la draw
-                adaptiveSubdivision(tempArray, NumPts);
+                adaptiveSubdivision(points, NumPts);
             }
         }
     }
@@ -500,13 +501,13 @@ void drawScene(void)
 int main(int argc, char** argv)
 {
 
-    printf("digitare 0 per de casteljau, 1 for suddivisione adattiva: ");
+    printf("digitare 1 per de casteljau, 2 for suddivisione adattiva: ");
 
     cin >> choosedDrawModality;
 
-    if (choosedDrawModality == 1) {
+    if (choosedDrawModality == 2) {
         cout << "\nScegli una quota di planarita: ";
-        cin >> quota_planarita;
+        cin >> precisionPlanarity;
     }
 
 
