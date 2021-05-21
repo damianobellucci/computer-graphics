@@ -46,6 +46,10 @@ un'altro all'inizio
 */
 #define nMaxPoints 120
 
+bool pointerOverPoint = false;
+
+float boundForPointer = 0.03;
+
 int chosenModality;
 
 static unsigned int programId;
@@ -58,10 +62,11 @@ unsigned int VBO_CURVE_POINTS;
 
 using namespace glm;
 
-/*5 point variables*/
-int mouseOverIndex = -1;
+
+int pointOfInterest;
 bool isMovingPoint = false;
-int movingPoint = -1;
+//variabile globale che rappresenta indice del punto che sto spostando
+int movingPoint;
 
 float pointsInWindow[nMaxPoints][3];
 
@@ -84,10 +89,7 @@ int i, j, xy;
 float x = 0, y = 0;
 
 
-/* Prototypes */
-void addNewPoint(float x, float y);
-void removeFirstPoint();
-void removeLastPoint();
+
 
 // Calcolo la distanza di un punto da un segmento
 float distToLine(vec3 pt1, vec3 pt2, vec3 point)
@@ -97,6 +99,55 @@ float distToLine(vec3 pt1, vec3 pt2, vec3 point)
     vec2 dirToPt1 = pt1 - point;
     return abs(dot(normalize(perpDir), dirToPt1));
 }
+
+/*
+funzione usata in myKeyboardFunc (se viene premuto tasto f)
+e in funzione addNewPoint se numero massimo di punti viene
+ecceduto
+*/
+void deletePointFirst()
+{
+    if (nCurrentPoints > 0)
+    {
+        nCurrentPoints--;
+        for (int i = 0; i < nCurrentPoints; i++)
+        {
+            pointsInWindow[i][0] = pointsInWindow[i + 1][0];
+            pointsInWindow[i][1] = pointsInWindow[i + 1][1];
+            pointsInWindow[i][2] = 0;
+        }
+    }
+}
+
+/*
+funzione usata se viene premuto il tasto l (elle) oppure
+se viene sorprassato il numero massimo di punti ammissibili
+*/
+void deletePointLast()
+{
+    if (nCurrentPoints > 0)
+    {
+        nCurrentPoints--;
+    }
+}
+
+/*
+Funzione che permette di aggiungere un nuovo punto
+alla fine della lista. Si rimuove il primo punto
+nella lista se ci sono troppi punti.
+*/
+void createPoint(float x, float y)
+{
+    if (nCurrentPoints >= nMaxPoints)
+    {
+        deletePointFirst();
+    }
+    pointsInWindow[nCurrentPoints][0] = x;
+    pointsInWindow[nCurrentPoints][1] = y;
+    pointsInWindow[nCurrentPoints][2] = 0;
+    nCurrentPoints++;
+}
+
 
 //algoritmo di suddivisione adattiva
 void adaptiveSubdivision(float points[nMaxPoints][3], int nPoints)
@@ -143,9 +194,8 @@ void adaptiveSubdivision(float points[nMaxPoints][3], int nPoints)
 
                 //applicazione decasteljau per le due sottocurve per calcolare i punti intermedi di ogni sottocurva
                 for (int j = 0; j < 2; j++)
-                    for (int k = 0; k < nPoints-1; k++) //se i punti sono 3 si fa solo 0 ed 1
+                    for (int k = 0; k < nPoints-1; k++)
                     {
-                        //calcolo della lerp
                         points[k][j] = points[k][j] * (1 - subdivisionFactor) + points[k + 1][j] * subdivisionFactor;
                     }
             }
@@ -196,13 +246,13 @@ void myKeyboardFunc(unsigned char key, int x, int y)
     {
     case 'f':
         if (nCurrentPoints > 0) {
-            removeFirstPoint();
+            deletePointFirst();
             glutPostRedisplay();
         }
         break;
     case 'l':
         if (nCurrentPoints > 0) {
-            removeLastPoint();
+            deletePointLast();
             glutPostRedisplay();
         }
         break;
@@ -212,38 +262,7 @@ void myKeyboardFunc(unsigned char key, int x, int y)
     }
 }
 
-/*
-funzione usata in myKeyboardFunc (se viene premuto tasto f)
-e in funzione addNewPoint se numero massimo di punti viene
-ecceduto
-*/
-void removeFirstPoint()
-{
-    int i;
-    if (nCurrentPoints > 0)
-    {
-        // Remove the first point, slide the rest down
-        nCurrentPoints--;
-        for (i = 0; i < nCurrentPoints; i++)
-        {
-            pointsInWindow[i][0] = pointsInWindow[i + 1][0];
-            pointsInWindow[i][1] = pointsInWindow[i + 1][1];
-            pointsInWindow[i][2] = 0;
-        }
-    }
-}
 
-/*
-funzione usata se viene premuto il tasto l (elle) oppure
-se viene sorprassato il numero massimo di punti ammissibili
-*/
-void removeLastPoint()
-{
-    if (nCurrentPoints > 0)
-    {
-        nCurrentPoints--;
-    }
-}
 
 void resizeWindow(int w, int h)
 {
@@ -262,9 +281,9 @@ tramite mouse.
 La funzione mymouseFunc è una callback di glute mouse function e gli argomenti vengono passati direttamente da opengl,
 quindi la funzione mymouse function viene solo passata alla glut mouse function e non chiamata in altre parti del codice.
 */
-void checkPointClickorNew (int button, int state, int x, int y)
+//placeholder
+void movePointOrCreateNew(int button, int state, int x, int y)
 {
-
     /*condizione per controllare che tasto sinistro sia stato premuto e
     mantenuto giù
     con GLUT_LEFT_BUTTON controllo che sia stato premuto e con glut down
@@ -272,21 +291,17 @@ void checkPointClickorNew (int button, int state, int x, int y)
     */
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
-
         //in questo caso la porzione di finestra è stata premuta per spostare un punto e non per crearne un altro
-        if (mouseOverIndex != -1)
+        if (pointerOverPoint)
         {
             isMovingPoint = true;
-            movingPoint = mouseOverIndex;
+            movingPoint = pointOfInterest;
             return;
         }
         // (x,y) viewport(0,width)x(0,height)   -->   (xPos,yPos) window(-1,1)x(-1,1)
-        float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
-        float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
-
-        //printf("new point Xpos %f Ypos %f \n", xPos, yPos);
-        //printf("new pixel x %d y %d \n", x, y);
-        addNewPoint(xPos, yPos);
+        float pointX = -1.0f + ((float)x) * 2 / ((float)(width));
+        float pointY = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
+        createPoint(pointX, pointY);
         glutPostRedisplay();
     }
 }
@@ -303,27 +318,33 @@ cioè il puntatore è approssimabilmente sopra il punto.
 Questa funzione è una callback della funzione opengl glutPassiveMotionFunc, quindi viene direttamente
 passata ad essa e non richiamata in altre parti del codice. I parametri xy vengo passati direttamente da opengl
 */
-void myPassiveMotionFunction(int x, int y)
+
+
+float distance(float x1, float y1, float x2, float y2)
+{
+    return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+}
+
+
+void checkClickedPoint(int x, int y)
 {
     //xy sono le coordinate del puntatore mouse al momento, da viewport devono essere trasformate a window
-    float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
-    float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
+    float xPoint = -1.0f + ((float)x) * 2 / ((float)(width));
+    float yPoint = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
 
-    //se uno dei punti nella finestra si avvicina di un tot alle coordinate del puntatore, allora si attiva il mouseOverIndex
-    //per quel punto, infatti mouse over index ci dirà quale i-esimo punto è puntato al momento. se mouseoverindex è -1
+    //se uno dei punti nella finestra si avvicina di un tot alle coordinate del puntatore, allora si attiva il pointOfInterest
+    //per quel punto, infatti mouse over index ci dirà quale i-esimo punto è puntato al momento. se pointOfInterest è -1
     //allora vuol dire che nessun punto è vicino alle coordinate del puntatore del mouse
     for (int i = 0; i < nCurrentPoints; i++)
     {
-        float dist = sqrt(pow(pointsInWindow[i][0] - xPos, 2) + pow(pointsInWindow[i][1] - yPos, 2));
-        if (dist < 0.03)
-        {
-            mouseOverIndex = i;
+        if (distance(xPoint, yPoint, pointsInWindow[i][0], pointsInWindow[i][1]) < boundForPointer){
+            pointOfInterest = i;
+            pointerOverPoint = true;
             glutPostRedisplay();
             return;
         }
-        else
-        {
-            mouseOverIndex = -1;
+        else{
+            pointerOverPoint = false;
         }
     }
     glutPostRedisplay();
@@ -335,36 +356,20 @@ Funzione da dare in input alla glutMotionFunc
 permette di aggiornare le posizioni de punti di controllo
 mentre vengono spostati
 */
-void spostaPunto(int x, int y)
+void movePoints(int x, int y)
 {
-    float xPos = -1.0f + ((float)x) * 2 / ((float)(width));
-    float yPos = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
+    float pointX = -1.0f + ((float)x) * 2 / ((float)(width));
+    float pointY = -1.0f + ((float)(height - y)) * 2 / ((float)(height));
 
     //se il punto è stato toccato per essere trascinato bisogna aggiornare le sue posizioni
     if (isMovingPoint)
     {
-        pointsInWindow[movingPoint][0] = xPos;
-        pointsInWindow[movingPoint][1] = yPos;
+        pointsInWindow[movingPoint][0] = pointX;
+        pointsInWindow[movingPoint][1] = pointY;
     }
     glutPostRedisplay();
 }
 
-/*
-Funzione che permette di aggiungere un nuovo punto
-alla fine della lista. Si rimuove il primo punto
-nella lista se ci sono troppi punti.
-*/
-void addNewPoint(float x, float y)
-{
-    if (nCurrentPoints >= nMaxPoints)
-    {
-        removeFirstPoint();
-    }
-    pointsInWindow[nCurrentPoints][0] = x;
-    pointsInWindow[nCurrentPoints][1] = y;
-    pointsInWindow[nCurrentPoints][2] = 0;
-    nCurrentPoints++;
-}
 
 void initShader(void)
 {
@@ -401,26 +406,28 @@ void init(void)
 }
 
 //Algoritmo deCasteljau, parametri t e 
-void deCasteljau(float t, float* curve)
+void deCasteljau(float* resultDeCasteljau, float t)
 {
-    float curveX[nMaxPoints], curveY[nMaxPoints];
+    float pointX[nMaxPoints], pointY[nMaxPoints];
 
     for (int i = 0; i < nCurrentPoints; i++)
     {
-        curveX[i] = pointsInWindow[i][0];
-        curveY[i] = pointsInWindow[i][1];
+        pointX[i] = pointsInWindow[i][0];
+        pointY[i] = pointsInWindow[i][1];
     }
     for (int i = 1; i < nCurrentPoints; i++)
     {
+        //le iterazioni lerp scenderanno di 1 ogni volta che finisce un ciclo estero. Esempio con poligonale
+        //da quattro punti: prima 3 lerp, poi 2, poi una, fine
         for (int k = 0; k < nCurrentPoints - i; k++)
         {
-            curveX[k] = (1 - t) * curveX[k] + (t)*curveX[k + 1];
-            curveY[k] = (1 - t) * curveY[k] + (t)*curveY[k + 1];
+            pointX[k] = (1 - t) * pointX[k] + (t)*pointX[k + 1];
+            pointY[k] = (1 - t) * pointY[k] + (t)*pointY[k + 1];
         }
     }
-    curve[0] = curveX[0];
-    curve[1] = curveY[0];
-    curve[2] = 0.0;
+    resultDeCasteljau[0] = pointX[0];
+    resultDeCasteljau[1] = pointY[0];
+    resultDeCasteljau[2] = 0.0;
 }
 
 /*
@@ -443,13 +450,9 @@ void drawScene(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-
-    //si disegnano prima i segmenti che uniscono i punti (line strip), poi i punti
-    // Draw the line segments
+    //si disegnano prima i segmenti che uniscono i punti (la poligonale di controllo), poi i punti di controllo
     glLineWidth(1);
     glDrawArrays(GL_LINE_STRIP, 0, nCurrentPoints);
-
-    // Draw the points (si disegnano i punti di controllo delle linee)
     glPointSize(16.0);
     glDrawArrays(GL_POINTS, 0, nCurrentPoints);
     glBindVertexArray(0);
@@ -457,28 +460,27 @@ void drawScene(void)
     //se ci sono almeno due punti nella finestra allora si potranno appllicare o de casteljau o suddivisione adattiva in base alla scelta effettuata all'inizio
     if (nCurrentPoints > 1)
     {
-        float curve[3];
-        
+        //caso algoritmo di De Casteljau
         if (chosenModality == 1)
         {
+            float resultDeCasteljau[3];
+
             for (i = 0; i <= 100; i++)
             {
                 //tramite i/100 parametrizzo la t tra 0 ed 1
-                deCasteljau((float)i / 100, curve);
+                deCasteljau(resultDeCasteljau, (float)i / 100);
                 //trattengo i punti xy da disegnare in seguito
-                pointsCurve[i][0] = curve[0];
-                pointsCurve[i][1] = curve[1];
+                pointsCurve[i][0] = resultDeCasteljau[0];
+                pointsCurve[i][1] = resultDeCasteljau[1];
                 pointsCurve[i][2] = 0;
             }
 
             glBindVertexArray(VAO_CURVE_POINTS);
             glBindBuffer(GL_ARRAY_BUFFER, VBO_CURVE_POINTS);
             glBufferData(GL_ARRAY_BUFFER, sizeof(pointsCurve), &pointsCurve[0], GL_STATIC_DRAW);
-            //ci sono solo gli attributi di posizione
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
             glEnableVertexAttribArray(0);
-
-            //si disegnano i punti interpolati con algoritmo de casteljau
+            //si disegnano i tratti di curva derivati dall'algoritmo di De Casteljau
             glLineWidth(4);
             glDrawArrays(GL_LINE_STRIP, 0, 101);
             glBindVertexArray(0);
@@ -528,9 +530,11 @@ int main(int argc, char** argv)
     glutReshapeFunc(resizeWindow);
 
     glutKeyboardFunc(myKeyboardFunc);
-    glutMouseFunc(checkPointClickorNew);
-    glutMotionFunc(spostaPunto);
-    glutPassiveMotionFunc(myPassiveMotionFunction);
+
+    glutPassiveMotionFunc(checkClickedPoint);
+    glutMouseFunc(movePointOrCreateNew);
+    glutMotionFunc(movePoints);
+
 
     glewExperimental = GL_TRUE;
     glewInit();
