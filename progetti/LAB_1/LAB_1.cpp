@@ -5,28 +5,9 @@
  *
  * Usage:
  *   Left click to place a control point.
- *		Maximum number of control points allowed is currently set at 64.
  *	 Press "f" to remove the first control point
  *	 Press "l" to remove the last control point.
  *	 Press escape to exit.
- */
-
- /* PUNTI DA SODDISFARE:
- 1,OK) provare i controlli da keyboard. tasto sinistro si aggiunge un punto,
- i comandi 'f' (lettera effe) e 'l' (lettera elle) rimuovono il primo e l'ultimo
- punto della lista di punti, rispettivamente. Oltre i 64 punti, i primi verranno
- rimossi.
-
- 2,OK) osservare come il programma usa le OpenGL GLUT callback per catturare
- gli eventi click del mouse e determinare le posizioni (x,y) relative
-
- 3,OK) Disegnare la curva di Bezier a partire dai punti di controllo inseriti,
- utilizzando l'algoritmo di de Casteljau
-
- 4, DA FARE) disegno di una curva di bezier mediante algoritmo ottimizzato,
- basato sulla suddivisione adattiva
-
-
  */
 
 #include <iostream>
@@ -77,16 +58,14 @@ int width = 500;
 int height = 500;
 
 int nCurrentPoints = 0;
-int NumPtsS = 0;
-
 float points[nMaxPoints][3];
+
 float subdivisionFactor = 0.5;
 
 //parametro di precisione suddivisione adattiva
 float precisionPlanarity;
 
-int i, j, xy;
-float x = 0, y = 0;
+
 
 
 
@@ -465,7 +444,7 @@ void drawScene(void)
         {
             float resultDeCasteljau[3];
 
-            for (i = 0; i <= 100; i++)
+            for (int i = 0; i <= 100; i++)
             {
                 //tramite i/100 parametrizzo la t tra 0 ed 1
                 deCasteljau(resultDeCasteljau, (float)i / 100);
