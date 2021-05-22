@@ -65,11 +65,6 @@ float subdivisionFactor = 0.5;
 //parametro di precisione suddivisione adattiva
 float precisionPlanarity;
 
-
-
-
-
-
 // Calcolo la distanza di un punto da un segmento
 float distToLine(vec3 pt1, vec3 pt2, vec3 point)
 {
@@ -77,6 +72,90 @@ float distToLine(vec3 pt1, vec3 pt2, vec3 point)
     vec2 perpDir = vec2(lineDir.y, -lineDir.x);
     vec2 dirToPt1 = pt1 - point;
     return abs(dot(normalize(perpDir), dirToPt1));
+}
+
+//algoritmo di suddivisione adattiva
+void adaptiveSubdivision(float points[nMaxPoints][3], int nPoints)
+{
+    bool continueRecursion = false;
+
+    vec3 firstPoint;
+    firstPoint[0] = points[0][0];
+    firstPoint[1] = points[0][1];
+    firstPoint[2] = 0;
+
+    vec3 lastPoint;
+    lastPoint[0] = points[nPoints - 1][0];
+    lastPoint[1] = points[nPoints - 1][1];
+    lastPoint[2] = 0;
+
+    //test di planarità sui control point interni. parto dal secondo (perché il primo è il primo estremo della retta per il test di planarità)
+    for (int i = 1; i < nPoints - 1; i++)
+    {
+        vec3 nextPoint;
+        nextPoint[0] = points[i][0];
+        nextPoint[1] = points[i][1];
+        nextPoint[2] = 0;
+
+        //eseguo il test di planarità
+        float dist = distToLine(firstPoint, lastPoint, nextPoint);
+
+        //se distanza tra punto e retta è maggiore della tolleranza scelta, allora devo continuare a suddividere perché l'interpolazione non è abbastanza precisa secondo i parametri
+        if (dist > precisionPlanarity)
+            continueRecursion = true;
+    }
+    if (continueRecursion) {
+        {
+            float firstHalfCurve[nMaxPoints][3];
+            float secondHalfCurve[nMaxPoints][3];
+
+            //carico i nuovi punti
+            for (int i = 0; i < nPoints; i++)
+            {
+                firstHalfCurve[i][0] = points[0][0];
+                firstHalfCurve[i][1] = points[0][1];
+                secondHalfCurve[nPoints- i - 1][0] = points[nPoints - i - 1][0];
+                secondHalfCurve[nPoints - i - 1][1] = points[nPoints - i - 1][1];
+
+                //applicazione decasteljau per ricavare i punti delle due sottocurve
+                for (int j = 0; j < 2; j++)
+                    for (int k = 0; k < nPoints-1; k++)
+                    {
+                        points[k][j] = points[k][j] * (1 - subdivisionFactor) + points[k + 1][j] * subdivisionFactor;
+                    }
+            }
+            //vado in ricorsione sulle due sottocurve ottenute dividendo quella iniziale
+
+            //passo le due sottocurve in ricorsione passando anche la dimensione delle due sottocurve. Siccome le due sottocurve ottenute
+            //hanno lo stesso numero di punti di quella di partenza, si passa sempre npoints. prima o poi si finirà quando è stato soddisfatto il test per la precisione.
+            adaptiveSubdivision(firstHalfCurve, nPoints);
+            adaptiveSubdivision(secondHalfCurve, nPoints);
+        }
+    }
+    //caso in cui possono tirare disegnare una linea dritta tra i due punti estremi in quanto il test di planarità è stato soddisfatto
+    else
+    {
+        //imposto le coordinate dei due punti che saranno gli estremi del segmento da disegnare perché il test di planarità è stato soddisfatto
+
+        pointsCurve[0][0] = firstPoint[0];
+        pointsCurve[0][1] = firstPoint[1];
+        pointsCurve[0][2] = 0;
+
+        pointsCurve[1][0] = lastPoint[0];
+        pointsCurve[1][1] = lastPoint[1];
+        pointsCurve[1][2] = 0;
+
+        glBindVertexArray(VAO_CURVE_POINTS);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_CURVE_POINTS);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(pointsCurve), &pointsCurve[0], GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glLineWidth(4);
+        glDrawArrays(GL_LINE_STRIP, 0, 2);
+        glBindVertexArray(0);
+        return;
+    }
+    return;
 }
 
 /*
@@ -127,91 +206,6 @@ void createPoint(float x, float y)
     nCurrentPoints++;
 }
 
-
-//algoritmo di suddivisione adattiva
-void adaptiveSubdivision(float points[nMaxPoints][3], int nPoints)
-{
-    bool continueRecursion = false;
-
-    vec3 firstPoint;
-    firstPoint[0] = points[0][0];
-    firstPoint[1] = points[0][1];
-    firstPoint[2] = 0;
-
-    vec3 lastPoint;
-    lastPoint[0] = points[nPoints - 1][0];
-    lastPoint[1] = points[nPoints - 1][1];
-    lastPoint[2] = 0;
-
-    //test di planarità sui control point interni. parto dal secondo (perché il primo è il primo estremo della retta per il test di planarità)
-    for (int i = 1; i < nPoints - 1; i++)
-    {
-        vec3 nextPoint;
-        nextPoint[0] = points[i][0];
-        nextPoint[1] = points[i][1];
-        nextPoint[2] = 0;
-
-        //eseguo il test di planarità
-        float dist = distToLine(firstPoint, lastPoint, nextPoint);
-
-        //se distanza tra punto e retta è maggiore della tolleranza scelta, allora devo continuare a suddividere perché l'interpolazione non è abbastanza precisa secondo i parametri
-        if (dist > precisionPlanarity)
-            continueRecursion = true;
-    }
-    if (continueRecursion) {
-        {
-            float firstHalfCurve[nMaxPoints][3];
-            float secondHalfCurve[nMaxPoints][3];
-
-            //carico i nuovi punti
-            for (int i = 0; i < nPoints; i++)
-            {
-                firstHalfCurve[i][0] = points[0][0];
-                firstHalfCurve[i][1] = points[0][1];
-                secondHalfCurve[nPoints- i - 1][0] = points[nPoints - i - 1][0];
-                secondHalfCurve[nPoints - i - 1][1] = points[nPoints - i - 1][1];
-
-                //applicazione decasteljau per le due sottocurve per calcolare i punti intermedi di ogni sottocurva
-                for (int j = 0; j < 2; j++)
-                    for (int k = 0; k < nPoints-1; k++)
-                    {
-                        points[k][j] = points[k][j] * (1 - subdivisionFactor) + points[k + 1][j] * subdivisionFactor;
-                    }
-            }
-            //vado in ricorsione sulle due sottocurve ottenute dividendo quella iniziale
-
-            //passo le due sottocurve in ricorsione passando anche la dimensione delle due sottocurve. Siccome le due sottocurve ottenute
-            //hanno lo stesso numero di punti di quella di partenza, si passa sempre npoints. prima o poi si finirà quando è stato soddisfatto il test per la precisione.
-            adaptiveSubdivision(firstHalfCurve, nPoints);
-            adaptiveSubdivision(secondHalfCurve, nPoints);
-        }
-    }
-    //caso in cui possono tirare disegnare una linea dritta tra i due punti estremi in quanto il test di planarità è stato soddisfatto
-    else
-    {
-        //imposto le coordinate dei due punti che saranno gli estremi del segmento da disegnare perché il test di planarità è stato soddisfatto
-
-        pointsCurve[0][0] = firstPoint[0];
-        pointsCurve[0][1] = firstPoint[1];
-        pointsCurve[0][2] = 0;
-
-        pointsCurve[1][0] = lastPoint[0];
-        pointsCurve[1][1] = lastPoint[1];
-        pointsCurve[1][2] = 0;
-
-        glBindVertexArray(VAO_CURVE_POINTS);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO_CURVE_POINTS);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(pointsCurve), &pointsCurve[0], GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glLineWidth(4);
-        glDrawArrays(GL_LINE_STRIP, 0, 2);
-        glBindVertexArray(0);
-        return;
-    }
-    return;
-}
-
 /*
 Funzione che data in input alla glutKeyboardFunc
 
@@ -257,10 +251,10 @@ Funzione da dare in input alla glutMouseFunc
 serve per controllare i comandi di spostamento punti di controllo
 tramite mouse.
 
-La funzione mymouseFunc è una callback di glute mouse function e gli argomenti vengono passati direttamente da opengl,
-quindi la funzione mymouse function viene solo passata alla glut mouse function e non chiamata in altre parti del codice.
+è una callback di glute mouse function e gli argomenti vengono passati direttamente da opengl,
+quindi la funzione viene solo passata alla glut mouse function e non chiamata in altre parti del codice.
 */
-//placeholder
+
 void movePointOrCreateNew(int button, int state, int x, int y)
 {
     /*condizione per controllare che tasto sinistro sia stato premuto e
@@ -285,18 +279,6 @@ void movePointOrCreateNew(int button, int state, int x, int y)
     }
 }
 
-/*
-Funzione da dare in input alla glutPassiveMotionFunc
-
-Controlla gli spostamenti passivi del mouse, cioè quelli che avvengono
-senza che venga toccato un altro comando. Il compito di questa funzione
-è quello di attivare il flag mouse over index se si rileva che la distanza
-del puntatore ed uno dei punti di controllo disegnati è sotto una certa soglia,
-cioè il puntatore è approssimabilmente sopra il punto.
-
-Questa funzione è una callback della funzione opengl glutPassiveMotionFunc, quindi viene direttamente
-passata ad essa e non richiamata in altre parti del codice. I parametri xy vengo passati direttamente da opengl
-*/
 
 
 float distance(float x1, float y1, float x2, float y2)
@@ -304,6 +286,18 @@ float distance(float x1, float y1, float x2, float y2)
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
 }
 
+/*
+Funzione da dare in input alla glutPassiveMotionFunc
+
+Controlla gli spostamenti passivi del mouse, cioè quelli che avvengono
+senza che venga toccato un altro comando. Il compito di questa funzione
+è quello di attivare il flag se si rileva che la distanza
+del puntatore ed uno dei punti di controllo disegnati è sotto una certa soglia,
+cioè il puntatore è approssimabilmente sopra il punto.
+
+Questa funzione è una callback della funzione opengl glutPassiveMotionFunc, quindi viene direttamente
+passata ad essa e non richiamata in altre parti del codice. I parametri xy vengo passati direttamente da opengl
+*/
 
 void checkClickedPoint(int x, int y)
 {
@@ -361,9 +355,6 @@ void initShader(void)
     glUseProgram(programId);
 }
 
-/*
-nella init vanno tutte le cose che si fanno una volta sola, prima di renderizzare
-*/
 void init(void)
 {
 
@@ -384,7 +375,7 @@ void init(void)
     glViewport(0, 0, width, height);
 }
 
-//Algoritmo deCasteljau, parametri t e 
+//Algoritmo deCasteljau
 void deCasteljau(float* resultDeCasteljau, float t)
 {
     float pointX[nMaxPoints], pointY[nMaxPoints];
@@ -408,16 +399,6 @@ void deCasteljau(float* resultDeCasteljau, float t)
     resultDeCasteljau[1] = pointY[0];
     resultDeCasteljau[2] = 0.0;
 }
-
-/*
-Questa funzione va in input alla funzione glut glutDisplayFunc
-
-è la funzione che effettivamente fa la renderizzazione.
-
-Come fa la drawArrays a sapere dove deve disegnare i punti?
-
-
-*/
 
 void drawScene(void)
 {
@@ -448,7 +429,7 @@ void drawScene(void)
             {
                 //tramite i/100 parametrizzo la t tra 0 ed 1
                 deCasteljau(resultDeCasteljau, (float)i / 100);
-                //trattengo i punti xy da disegnare in seguito
+                //trattengo i punti x ed y da disegnare in seguito
                 pointsCurve[i][0] = resultDeCasteljau[0];
                 pointsCurve[i][1] = resultDeCasteljau[1];
                 pointsCurve[i][2] = 0;
@@ -472,7 +453,7 @@ void drawScene(void)
                     for (int j = 0; j < nCurrentPoints; j++)
                         points[j][i] = pointsInWindow[j][i];
 
-                //una volta caricato il vettore tempArray applico la suddivisione adattiva, al suo interno avverà anche la draw
+                //una volta caricato il vettore applico la suddivisione adattiva, al suo interno avverà anche la draw
                 adaptiveSubdivision(points, nCurrentPoints);
             }
         }
