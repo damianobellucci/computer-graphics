@@ -23,7 +23,7 @@
 
 /*questo valore ci serve per settare un limite dei punti di controllo
 disegnabili oltre la quale se si disegna un nuovo punto verrà eliminato
-un'altro all'inizio
+un altro all'inizio
 */
 #define nMaxPoints 120
 
