@@ -120,7 +120,7 @@ int nVertices_Nemico = 3 * nTriangles + 2 * 3 * nTriangles + nvBocca + nvTentaco
 int nVertices_PallaProiettile = 24;
 
 Point* Navicella = new Point[7];
-Point* Nemico = new Point[nVertices_Nemico];
+Point* Nemico = new Point[6];
 Point* giocatoreRettangolare = new Point[7];
 Point* PallaProiettile = new Point[nVertices_PallaProiettile];
 
@@ -199,7 +199,7 @@ void initScia(Point* puntiScia) {
 	}
 }
 
-void disegna_cerchio5(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio)
+void disegna_palla(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio)
 {
 	int i;
 	float stepA = (2 * PI) / triangoliPalla;
@@ -277,19 +277,6 @@ void updateNemici(int value)
 				direzioneYnemici.at(i) = direzioneYnemici.at(i) + offset;
 			}
 		}
-		/*
-		if (((rand() % 10 + 1)) <= 4){
-			dxnemici = dxnemici + (rand() % 10 + 20);
-
-			dynemici = dynemici + (rand() % 10 + 20);
-		}
-		else {
-			dxnemici = dxnemici - (rand() % 10 + 20);
-
-			dynemici = dynemici - (rand() % 10 + 20);
-		}*/
-
-
 	}
 	glutTimerFunc(5, updateNemici, 0);
 	glutPostRedisplay();
@@ -606,28 +593,6 @@ void keyboardReleasedEvent(unsigned char key, int x, int y)
 /// /////////////////////////////////// Disegna geometria //////////////////////////////////////
 
 
-void disegna_tentacoli(Point* Punti, vec4 color_top, vec4 color_bot)
-{
-	float alfa = 2, step = PI / 4;
-	Point P0;
-	int i;
-	P0.x = 0.0;	P0.y = 0.0;  // centro circonferenza
-	int cont = 0;
-	//for (step = 0; step < 2 * PI; step += PI / 4) //  per ciascuno degli 8 tentacoli
-	for (i = 0; i < 8; i++)//  per ciascuno degli 8 tentacoli
-	{
-		Punti[cont].x = cos(i * step);  // punto sulla circonferenza 
-		Punti[cont].y = sin(i * step);
-		Punti[cont].z = 0.0;
-		Punti[cont].r = color_bot.r; Punti[cont].g = color_bot.g; Punti[cont].b = color_bot.b; Punti[cont].a = color_bot.a;
-		Punti[cont + 1].x = lerp(P0.x, Punti[cont].x, alfa);  //punto fuori circonferenza
-		Punti[cont + 1].y = lerp(P0.y, Punti[cont].y, alfa);
-		Punti[cont + 1].z = 0.0;
-		Punti[cont + 1].r = color_top.r; Punti[cont + 1].g = color_top.g; Punti[cont + 1].b = color_top.b; Punti[cont + 1].a = color_top.a;
-		cont += 2;
-	}
-}
-
 void disegna_piano(float x, float y, float width, float height, vec4 color_top, vec4 color_bot, Point* piano)
 {
 	piano[0].x = x;	piano[0].y = y; piano[0].z = 0;
@@ -708,7 +673,7 @@ void disegna_rettangolo_giocatore(float cx, float cy, float raggiox, float raggi
 	GiocatoreRettangolare[comp].a = 1;
 }
 
-void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio)
+void disegnaNemico(float cx, float cy, float raggiox, float raggioy, vec4 color_top, vec4 color_bot, Point* Cerchio)
 {
 
 	float stepA = (2 * PI) / nTriangles;
@@ -765,48 +730,8 @@ void disegna_cerchio(float cx, float cy, float raggiox, float raggioy, vec4 colo
 
 void disegna_nemico(vec4 color_top_Nemico, vec4 color_bot_Nemico, vec4 color_top_Occhio, vec4 color_bot_Occhio, Point* Nemico)
 {
-
-
-	disegna_cerchio(0.0, 0.0, 1.0, 1.0, color_top_Nemico, color_bot_Nemico, Nemico);
-
-	/*// Disegna i due occhi
-	disegna_cerchio(-0.5, 0.5, 0.1, 0.1, color_top_Occhio, color_bot_Occhio, Occhio);
-	cont = 3 * nTriangles;
-	for (i = 0; i < v_faccia; i++)
-		Nemico[i + cont] = Occhio[i];
-	disegna_cerchio(0.5, 0.5, 0.1, 0.1, color_top_Occhio, color_bot_Occhio, Occhio);
-	cont = cont + 3 * nTriangles;
-	for (i = 0; i < v_faccia; i++)
-		Nemico[i + cont] = Occhio[i];
-
-	cont = cont + 3 * nTriangles;
-
-	//Aggiungo bocca
-	Nemico[cont].x = -0.5;	Nemico[cont].y = -0.5;	Nemico[cont].z = 0.0;
-	Nemico[cont].r = col_nero.r; Nemico[cont].g = col_nero.g; Nemico[cont].b = col_nero.b; Nemico[cont].a = col_nero.a;
-
-	Nemico[cont + 1].x = -0.25;	Nemico[cont + 1].y = -0.25;	Nemico[cont + 1].z = 0.0;
-	Nemico[cont + 1].r = col_nero.r; Nemico[cont + 1].g = col_nero.g; Nemico[cont + 1].b = col_nero.b; Nemico[cont + 1].a = col_nero.a;
-
-	Nemico[cont + 2].x = 0.0;	Nemico[cont + 2].y = -0.5;	Nemico[cont + 2].z = 0.0;
-	Nemico[cont + 2].r = col_nero.r; Nemico[cont + 2].g = col_nero.g; Nemico[cont + 2].b = col_nero.b; Nemico[cont + 2].a = col_nero.a;
-
-	Nemico[cont + 3].x = 0.25;	Nemico[cont + 3].y = -0.25;	Nemico[cont + 3].z = 0.0;
-	Nemico[cont + 3].r = col_nero.r; Nemico[cont + 3].g = col_nero.g; Nemico[cont + 3].b = col_nero.b; Nemico[cont + 3].a = col_nero.a;
-
-	Nemico[cont + 4].x = 0.5; Nemico[cont + 4].y = -0.5;	Nemico[cont + 4].z = 0.0;
-	Nemico[cont + 4].r = col_nero.r; Nemico[cont + 4].g = col_nero.g; Nemico[cont + 4].b = col_nero.b; Nemico[cont + 4].a = col_nero.a;
-
-	cont = cont + 5;
-
-	disegna_tentacoli(Tentacoli, col_nero, col_rosso);
-	for (i = 0; i < nV_Tentacoli; i++)
-		Nemico[cont + i] = Tentacoli[i];
-		*/
+	disegnaNemico(0.0, 0.0, 1.0, 1.0, color_top_Nemico, color_bot_Nemico, Nemico);
 }
-
-
-
 
 void initShader(void)
 {
@@ -823,9 +748,6 @@ void initShader(void)
 
 	programId_1 = ShaderMaker::createProgram(vertexShader1, fragmentShader1);
 }
-
-
-
 
 void init(void)
 {
@@ -849,8 +771,7 @@ void init(void)
 	for (int i = 0; i < numeroNemici; i++) {
 		posizioniXinizialiNemici.push_back(rangeRandomAlg2(50, width - 50));
 		posizioniYinizialiNemici.push_back(rangeRandomAlg2(400, height - 100));
-		//posizioniXinizialiNemici.push_back(rand() % (width - 300 + 1) + 300);
-		//posizioniYinizialiNemici.push_back(rand() % (height - 300 + 1) + 300);
+
 	}
 
 	for (int i = 0; i < numeroNemici; i++) {
@@ -872,13 +793,6 @@ void init(void)
 		int rand = rangeRandomAlg2(7, 100) / 100;
 		fattoreDispersionePuntiScia.push_back(rand);
 	}
-	/*
-	for (int i = 0; i < numeroNemici; i++) {
-		cout << posizioniX.at(i);
-		cout << " | ";
-		cout << posizioniY.at(i);
-		cout << "\n";
-	}*/
 
 	//////INIZIALIZZAZIONE SCIA PS//////////////////////////////////////
 
@@ -923,7 +837,9 @@ void init(void)
 	//disegno palla protiettile
 	vec4 color_top_corpo = { 1.0,0.0,0,1 };
 	vec4 color_bot_corpo = { 1.0,1.0,1.0,1.0 };
-	disegna_cerchio5(0.0, -1.0, raggioxPalla, raggioyPalla, color_top_corpo, color_bot_corpo, PallaProiettile);
+
+
+	disegna_palla(0.0, -1.0, raggioxPalla, raggioyPalla, color_top_corpo, color_bot_corpo, PallaProiettile);
 
 	glGenVertexArrays(1, &VAO_PALLA);
 	glBindVertexArray(VAO_PALLA);
@@ -973,7 +889,7 @@ void init(void)
 	glBindVertexArray(VAO_NEMICO);
 	glGenBuffers(1, &VBO_N);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_N);
-	glBufferData(GL_ARRAY_BUFFER, nVertices_Nemico * sizeof(Point), &Nemico[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(Point), &Nemico[0], GL_STATIC_DRAW);
 	//per le posizioni xyz del vertice
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -1006,118 +922,6 @@ void init(void)
 
 bool firstDrawVirus = false;
 
-
-
-void updatePuntiScia(Point* puntiScia) {
-	vitaScia++;
-	cout << vitaScia;
-	cout << "\n";
-	int offsetDaPalla = 20;
-
-	for (int i = 0; i < nPuntiScia; i++) {
-		int randX = rangeRandomAlg2(5, 100);
-		if (direzioneScia == "right") {
-			randX = -randX;
-		}
-		puntiScia[i].x = offsetDaPalla + firePosition + posx_Proiettile + varOffsetSciaX + randX * fattoreDispersionePuntiScia.at(i);
-		puntiScia[i].y = offsetDaPalla + posy + posy_Proiettile + varOffsetSciaY - rangeRandomAlg2(5, 100) * fattoreDispersionePuntiScia.at(i);
-		puntiScia[i].z = 0.0;
-		puntiScia[i].r = 1.0;
-		puntiScia[i].g = 0;
-		puntiScia[i].b = 0;
-
-		puntiScia[i].a = 1.0;
-	}
-}
-
-void updatePS(Point* puntiScia, int px, int py) {
-	int dispersionex = rangeRandomAlg2(10, 40);
-	for (int i = 0; i < nPuntiScia; i++) {
-		if (direzioneScia == "left") {
-			puntiScia[i].x = px + rangeRandomAlgNuovo(10, 50) - rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
-			puntiScia[i].y = py + rangeRandomAlgNuovo(10, 50) + dimensioneNemici + rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
-
-		}
-		else {
-			puntiScia[i].x = px + rangeRandomAlgNuovo(10, 50) + dimensioneNemici + rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
-
-			puntiScia[i].y = py + rangeRandomAlgNuovo(10, 50) + dimensioneNemici + rangeRandomAlgNuovo(10, 20) * vitaPS / 30;
-
-		}
-
-		puntiScia[i].z = 0.0;
-		puntiScia[i].r = 1.0;
-		puntiScia[i].g = 0;
-		puntiScia[i].b = 0;
-		puntiScia[i].a = 1.0;
-	}
-}
-
-int motoUniformementeAccelerato(int s_iniziale, int v_iniziale,int vitaPS, int a) {
-	return 1/2 * a*1*1+v_iniziale*vitaPS+s_iniziale;
-}
-
-
-
-void updatePS2beforeFix(int v) {
-	float v0 = 1;
-	float a = 0.1;
-	float tempo = vitaPS/1.9;
-
-	if (vitaPS == 0) {
-		for (int i = 0; i < nPuntiScia; i++) {
-			posXPrecedentePuntiPS.at(i)=(posxPS + rangeRandomAlgNuovo(10, 75));
-			posYPrecedentePuntiPS.at(i)=(posyPS + rangeRandomAlgNuovo(10, 75));
-
-		}
-	}
-
-	for (int i = 0; i < nPuntiScia; i++) {
-		if (direzioneScia == "left") {
-
-			puntiScia[i].x =  posXPrecedentePuntiPS.at(i) - v0* tempo -1/2*a* tempo * tempo;
-			puntiScia[i].y =  posYPrecedentePuntiPS.at(i) + v0 * tempo - 1 / 2 * a * tempo * tempo;
-			//puntiScia[i].x = posXPrecedentePuntiPS.at(i) - fattoreVelocitaParticellaPS.at(i)/vitaPS;
-			//puntiScia[i].y = posYPrecedentePuntiPS.at(i) + fattoreVelocitaParticellaPS.at(i);
-			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
-			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
-			/*
-			puntiScia[i].x = posXPrecedentePuntiPS.at(i) - 4 * vitaPS / 30;
-			puntiScia[i].y =posYPrecedentePuntiPS.at(i) + dimensioneNemici + 4  * vitaPS / 30;
-			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
-			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
-			*/
-		}
-		else {
-			puntiScia[i].x = posXPrecedentePuntiPS.at(i) + v0 * tempo - 1 / 2 * a * tempo * tempo;
-			puntiScia[i].y = posYPrecedentePuntiPS.at(i) + v0 * tempo - 1 / 2 * a * tempo * tempo;
-			//puntiScia[i].x = posXPrecedentePuntiPS.at(i) - fattoreVelocitaParticellaPS.at(i)/vitaPS;
-			//puntiScia[i].y = posYPrecedentePuntiPS.at(i) + fattoreVelocitaParticellaPS.at(i);
-			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
-			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
-		}
-
-		puntiScia[i].z = 0.0;
-		puntiScia[i].r = 1.0;
-		puntiScia[i].g = 0;
-		puntiScia[i].b = 0;
-		puntiScia[i].a = 1;
-	}
-
-
-	if (vitaPS < 20) {
-		vitaPS++;
-		glutPostRedisplay();
-		glutTimerFunc(20, updatePS2beforeFix, 0);
-	}
-	else {
-		attivaPS = false;
-		vitaPS = 0;
-	}
-
-}
-
-
 void updatePS2(int v) {
 	float v0 = 0.5;
 	float a = 0.5;
@@ -1141,25 +945,14 @@ void updatePS2(int v) {
 
 			puntiScia[i].x = posXPrecedentePuntiPS.at(i) - v0 * tempo - 1 / 2 * a * tempo * tempo;
 			puntiScia[i].y = posYPrecedentePuntiPS.at(i) + v0 * tempo + 1 / 2 * a * tempo * tempo;
-			//puntiScia[i].x = posXPrecedentePuntiPS.at(i) - fattoreVelocitaParticellaPS.at(i)/vitaPS;
-			//puntiScia[i].y = posYPrecedentePuntiPS.at(i) + fattoreVelocitaParticellaPS.at(i);
 			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
 			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
 			puntiScia[i].x = puntiScia[i].x + posxPS;
 			puntiScia[i].y = puntiScia[i].y + posyPS;
-
-			/*
-			puntiScia[i].x = posXPrecedentePuntiPS.at(i) - 4 * vitaPS / 30;
-			puntiScia[i].y =posYPrecedentePuntiPS.at(i) + dimensioneNemici + 4  * vitaPS / 30;
-			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
-			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
-			*/
 		}
 		else {
 			puntiScia[i].x = posXPrecedentePuntiPS.at(i) + v0 * tempo + 1 / 2 * a * tempo * tempo;
 			puntiScia[i].y = posYPrecedentePuntiPS.at(i) + v0 * tempo + 1 / 2 * a * tempo * tempo;
-			//puntiScia[i].x = posXPrecedentePuntiPS.at(i) - fattoreVelocitaParticellaPS.at(i)/vitaPS;
-			//puntiScia[i].y = posYPrecedentePuntiPS.at(i) + fattoreVelocitaParticellaPS.at(i);
 			posXPrecedentePuntiPS.at(i) = puntiScia[i].x;
 			posYPrecedentePuntiPS.at(i) = puntiScia[i].y;
 			puntiScia[i].x = puntiScia[i].x + posxPS;
@@ -1186,9 +979,6 @@ void updatePS2(int v) {
 
 }
 
-
-
-
 void drawScene(void)
 {
 	glUniformMatrix4fv(MatProj, 1, GL_FALSE, value_ptr(Projection));
@@ -1204,170 +994,49 @@ void drawScene(void)
 	glDrawArrays(GL_TRIANGLES, 0, vertices_cielo);
 	glBindVertexArray(0);
 
-
-
-	/*
-	for (int i = 0; i < nPuntiScia; i++) {
-		cout << puntiScia[i].x;
-		cout << " | ";
-		cout << puntiScia[i].y;
-		cout << " | ";
-		cout << puntiScia[i].z;
-		cout << " | ";
-		cout << puntiScia[i].r;
-		cout << " | ";
-		cout << puntiScia[i].g;
-		cout << " | ";
-		cout << puntiScia[i].b;
-		cout << " | ";
-		cout << puntiScia[i].a;
-		cout << "\n";
-	}
-	*/
-	if (false) {
-		updatePuntiScia(puntiScia);
-
-		///////////////////disegna scia
-
-
-		glBindVertexArray(VAO_SCIA);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_SCIA);
-		glBufferData(GL_ARRAY_BUFFER, nPuntiScia * sizeof(Point), &puntiScia[0], GL_STATIC_DRAW);
-		// Configura l'attributo posizione
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		// Configura l'attributo colore
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-		glPointSize(7.0);
-		Model = mat4(1.0);
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glDrawArrays(GL_POINTS, 0, nPuntiScia);
-		glBindVertexArray(0);
-
-
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-
-
-	if (false) {
-		////////////////////////Disegno il proiettile puntiforme
-		glBindVertexArray(VAO);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glPointSize(8.0);
-		Model = mat4(1.0);
-		if (sparoInVolo) {
-			Model = translate(Model, vec3(firePosition + posx_Proiettile, posy + posy_Proiettile, 0));
-		}
-		else {
-			Model = translate(Model, vec3(posx + posx_Proiettile, posy + posy_Proiettile, 0));
-		}
-
-		glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-		glDrawArrays(GL_POINTS, 6, 1);
-		glBindVertexArray(0);
-		/////////////////////////////////////////
-	}
-
-
-
 	///////////////////////////Disegno Navicella
 	glBindVertexArray(VAO);
 	Model = mat4(1.0);
 	Model = translate(Model, vec3(posx, posy, 0.0));
 	Model = scale(Model, vec3(larghezzaGiocatore, altezzaGiocatore, 1.0));
-	//Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
 	glUniformMatrix4fv(MatModel, 1, GL_FALSE, value_ptr(Model));
-	glDrawArrays(GL_TRIANGLES, 0, nVertices_Navicella - 1);
+	glDrawArrays(GL_TRIANGLES, 0,6);
 	glBindVertexArray(0);
-	////////////////////////DISEGNO SCIA///////////////////////////////////
 
-	if (true) {
-		//////////////////////////DISEGNO PALLA PROIETTILE
-
-		glBindVertexArray(VAO_PALLA);
-
-		Model = mat4(1.0);
-		//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
-
-
-
-		if (sparoInVolo) {
-			Model = translate(Model, vec3(firePosition + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
-		}
-		else {
-			Model = translate(Model, vec3(posx + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
-		}
-		Model = scale(Model, vec3(dimensionePalla, dimensionePalla, 1.0));
-
-		glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		// faccia e occhi
-		glDrawArrays(GL_TRIANGLES, 0, triangoliPalla * 3);
-
-		glBindVertexArray(0);
-		/////////////////////////
+	//////////////////////////DISEGNO PALLA PROIETTILE
+	glBindVertexArray(VAO_PALLA);
+	Model = mat4(1.0);
+	if (sparoInVolo) {
+		Model = translate(Model, vec3(firePosition + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
 	}
+	else {
+		Model = translate(Model, vec3(posx + posx_Proiettile, dimensionePalla + posy + posy_Proiettile, 0));
+	}
+	Model = scale(Model, vec3(dimensionePalla, dimensionePalla, 1.0));
+	glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
+	glDrawArrays(GL_TRIANGLES, 0, triangoliPalla * 3);
+	glBindVertexArray(0);
 
 
 	glUseProgram(programId_1); // attiva  fragment shader_1 solo per il nemico
 	glUniform1f(loc, t);
 
-	// Disegna nemici VIRUS
+	// Disegna nemici 
 	glBindVertexArray(VAO_NEMICO);
 	float passo_Nemici = ((float)width) / nemici_per_riga;
 	float passo_righe = 150;
 
-
 	for (int i = 0; i < numeroNemici; i++) {
-
 		if (!avversarioColpito.at(i))
 		{
 			Model = mat4(1.0);
-			//Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
-
 			Model = translate(Model, vec3(posizioniXinizialiNemici.at(i) + sfasamentoXnemici.at(i) + direzioneXnemici.at(i), posizioniYinizialiNemici.at(i) + sfasamentoYnemici.at(i) + direzioneYnemici.at(i), 0));
 			Model = scale(Model, vec3(dimensioneNemici, dimensioneNemici, 1.0));
-			//Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
 			glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
-			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			// faccia e occhi
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
-			//glLineWidth(3.0);  // bocca
-			//glDrawArrays(GL_LINE_STRIP, nVertices_Nemico - nvBocca - nvTentacoli, nvBocca);
-			//glLineWidth(8.0); // tentacoli
-			//glDrawArrays(GL_LINES, nVertices_Nemico - nvTentacoli, nvTentacoli);
 		}
 	}
-	/*
-	for (int i = 0; i < numero_di_righe; i++)
-	{
-		//posyN = height - i * passo_righe - 20;
-		posyN = height - i * passo_righe - 20-rand()%10;
-		for (int j = 0; j < nemici_per_riga; j++)
-		{
-			//posxN = j * (passo_Nemici)+passo_Nemici / 2;
-			posxN = j * (passo_Nemici)+passo_Nemici / 2;
-			if (!colpito[i][j]) {
-				Model = mat4(1.0);
-				Model = translate(Model, vec3(posxN + dxnemici, posyN + dynemici, 0));
-				Model = scale(Model, vec3(30.0, 30.0, 1.0));
-				Model = rotate(Model, radians(angolo), vec3(0.0, 0.0, 1.0));
-				glUniformMatrix4fv(MatModel1, 1, GL_FALSE, value_ptr(Model));
-				//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				// faccia e occhi
-				glDrawArrays(GL_TRIANGLES, 0, nVertices_Nemico - nvBocca - nvTentacoli);
-				glLineWidth(3.0);  // bocca
-				glDrawArrays(GL_LINE_STRIP, nVertices_Nemico - nvBocca - nvTentacoli, nvBocca);
-				glLineWidth(8.0); // tentacoli
-				glDrawArrays(GL_LINES, nVertices_Nemico - nvTentacoli, nvTentacoli);
-			}
-		}
-	}*/
 	glBindVertexArray(0);
-
-
 
 	//controllo se avversario è stato colpito da proiettile
 	for (int i = 0; i < numeroNemici; i++) {
@@ -1379,10 +1048,10 @@ void drawScene(void)
 		int bound = 60;
 		if (
 			(
-				(firePosition + posx_Proiettile + dimensionePalla/2  >= posizioneXavversario)
-				&& (firePosition + posx_Proiettile -dimensionePalla/2   <= posizioneXavversario + dimensioneNemici))
+				(firePosition + posx_Proiettile + dimensionePalla / 2 >= posizioneXavversario)
+				&& (firePosition + posx_Proiettile - dimensionePalla / 2 <= posizioneXavversario + dimensioneNemici))
 			&&
-			((posy + posy_Proiettile + dimensionePalla / 2 >= posizioneYavversario) && (posy + posy_Proiettile -dimensionePalla / 2 <= posizioneYavversario + dimensioneNemici))
+			((posy + posy_Proiettile + dimensionePalla / 2 >= posizioneYavversario) && (posy + posy_Proiettile - dimensionePalla / 2 <= posizioneYavversario + dimensioneNemici))
 			&&
 			!avversarioDisattivato.at(i)
 			)
@@ -1404,11 +1073,7 @@ void drawScene(void)
 			}
 		}
 	}
-
-
 	if (attivaPS) {
-
-
 		glBindVertexArray(VAO_SCIA);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO_SCIA);
 		glBufferData(GL_ARRAY_BUFFER, nPuntiScia * sizeof(Point), &puntiScia[0], GL_STATIC_DRAW);
@@ -1425,12 +1090,8 @@ void drawScene(void)
 		glBindVertexArray(0);
 
 	}
-
-
-
 	bool makeSwapBuffer = true;
 	bool giocatoreColpito = false;
-
 	//controllo se navicella è stata presa da un virus
 	for (int i = 0; i < numeroNemici; i++) {
 		int posizioneXavversario;
@@ -1453,63 +1114,18 @@ void drawScene(void)
 			)
 		{
 			cout << "\ngame over: sei stato colpito da un avversario\n";
-
-			//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
-
 			std::chrono::milliseconds timespan(3000);
-
 			std::this_thread::sleep_for(timespan);
 			makeSwapBuffer = false;
-
 			glutDestroyWindow(window);
 		}
 	}
-
 	if (!giocatoreColpito) {
 		//controllo vittoria
-
 		if (counterColpiti == numeroNemici && checkSwapBuffer < 1) {
 			cout << "\nhai vinto: hai ucciso tutti gli avversari\n";
-			//qui devo cambiare di colore la navicella per dare un feedback che è stata colpita
-			//std::chrono::milliseconds timespan(3000);
-			//std::this_thread::sleep_for(timespan);
 			checkSwapBuffer++;
-
-			//makeSwapBuffer = false;
-			//glutDestroyWindow(window);
-
-
 		}
-
-
-
-
-
-		/*
-		// calcolo virus colpiti
-		for (int i = 0; i < numero_di_righe; i++)
-		{
-			posyN = height - i * passo_righe - 20 + rand() % 20;
-			for (int j = 0; j < nemici_per_riga; j++)
-			{
-				posxN = j * (passo_Nemici)+passo_Nemici / 2 + rand() % 40;
-				//	printf("Posizione del proiettile: x= %f y=%f \n", posx + posx_Proiettile, posy + posy_Proiettile);
-				//	printf("BB nemico %d %d : xmin= %f ymin=%f  xmax=%f ymax=%f \n", i,j, posxN - 50 , posyN-50, + posx_Proiettile, posy + posy_Proiettile);
-				if (((firePosition + posx_Proiettile >= posxN + dxnemici - 50) && (firePosition + posx_Proiettile <= posxN + dxnemici + 50)) && ((posy + posy_Proiettile >= posyN + dynemici - 50) && (posy + posy_Proiettile <= posyN + dynemici + 50)))
-				{
-					if (!colpito[i][j]) //se non era già stato colpito
-					{
-						NumeroColpiti++;
-						printf("Numero colpiti %d \n", NumeroColpiti);
-						colpito[i][j] = true;
-					}
-				}
-			}
-		}*/
-
-
-
-
 
 		if (checkSwapBuffer < 2 && makeSwapBuffer)
 		{
@@ -1547,15 +1163,7 @@ int sanitycheck() {
 
 int main(int argc, char* argv[])
 {
-	//scelta da terminale del numero di nemici
-
-
-
 	numeroNemici= sanitycheck();
-
-
-	
-
 
 	glutInit(&argc, argv);
 
